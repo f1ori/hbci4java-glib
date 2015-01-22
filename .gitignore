@@ -1,0 +1,6 @@
+*.o
+ghbci-marshal.c
+ghbci-marshal.h
+libghbci.so
+*.gir
+*.typelib
