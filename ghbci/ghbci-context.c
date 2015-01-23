@@ -1,11 +1,8 @@
 /*
  * ghbci-context.c
  *
- * ghbci - A GObject wrapper of the libfreenect library
- * Copyright (C) 2011 Igalia S.L.
- *
- * Authors:
- *  Florian Richter <mail@f1ori.de>
+ * ghbci - A GObject wrapper of the hbci4java library
+ * Copyright (C) 2014-2015 Florian Richter
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
