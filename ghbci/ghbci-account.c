@@ -18,8 +18,9 @@
 
 /**
  * SECTION:ghbci-account
- * @short_description: Object representing a hbci4java java vm
+ * @short_description: Bank Account
  *
+ * Wraps a hbci4java bank account object
  **/
 
 #include <jni.h>
@@ -117,6 +118,31 @@ ghbci_account_class_init (GHbciAccountClass *class)
                                                           G_PARAM_READWRITE));
 
     /**
+     * GHbciAccount:blz
+     *
+     * Bankleitzahl
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_BLZ,
+                                     g_param_spec_string ("blz",
+                                                          "BLZ",
+                                                          "bank code (Bankleitzahl)",
+                                                          "no-name-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
+
+    /**
+     * GHbciAccount:name
+     *
+     * Owner name
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_NAME,
+                                     g_param_spec_string ("name",
+                                                          "Name",
+                                                          "owner name",
+                                                          "no-name-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
+    /**
      * GHbciAccount:number
      *
      * account number
@@ -126,6 +152,19 @@ ghbci_account_class_init (GHbciAccountClass *class)
                                      g_param_spec_string ("number",
                                                           "Number",
                                                           "Account number",
+                                                          "no-name-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
+
+    /**
+     * GHbciAccount:currency
+     *
+     * currency
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_CURRENCY,
+                                     g_param_spec_string ("currency",
+                                                          "Currency",
+                                                          "Currency of account",
                                                           "no-name-set" /* default value*/,
                                                           G_PARAM_READWRITE));
 

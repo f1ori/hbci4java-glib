@@ -18,35 +18,18 @@
 
 /**
  * SECTION:ghbci-context
- * @short_description: Object representing a hbci4java java vm
+ * @short_description: Context object for all hbci4java actions
  *
- * A #GFreenectDevice is created using the asynchronous failable constructor
- * gfreenect_device_new(). Then gfreenect_device_new_finish() is called
- * within the provided callback, to obtain the new #GFreenectDevice instance.
+ * This object is needed for all actions involving hbci4java. You have to
+ * provide callbacks at least for the signal #callback. This gets triggered,
+ * whenever hbci4java needs user-input like account information or credentials.
  *
- * Use gfreenect_device_set_tilt_angle() and
- * gfreenect_device_set_tilt_angle_finish() to asynchronously move the tilt
- * motor to the desired angle. gfreenect_device_get_tilt_angle() and
- * gfreenect_device_get_tilt_angle_finish() are used to obtain the current tilt
- * angle, also asynchronously. For a synchronous call use
- * gfreenect_device_get_tilt_angle_sync().
+ * On initialization, you have to specify a passport-file, which caches bank
+ * account parameters. Before using a new bank account, it has to be
+ * registered using ghbci_context_add_passport().
  *
- * The led status is set asynchronously using gfreenect_device_set_led() and
- * gfreenect_device_set_led_finish().
- *
- * To start the depth or video camera streams,
- * use gfreenect_device_start_depth_stream() and
- * gfreenect_device_start_video_stream() respectively. Then connect to the
- * signals #GFreenectDevice::depth-frame and #GFreenectDevice::video-frame
- * to get notified when a new frame is available. The actual frame data is
- * obtained using methods like gfreenect_device_get_depth_frame_raw(),
- * gfreenect_device_get_depth_frame_grayscale(),
- * gfreenect_device_get_video_frame_rgb(), etc. Note that these methods should
- * only be called from within the signal handlers.
- *
- * The accelerometer data can be obtained asynchronously using
- * gfreenect_device_get_accel() and gfreenect_device_get_accel_finish(),
- * or synchronously using gfreenect_device_get_accel_sync().
+ * Internally, this object sets up a java virtual machine with all necessary
+ * references to java classes, methods and fields and initializes hbci4java.
  **/
 
 #include <jni.h>
@@ -101,7 +84,8 @@ ghbci_context_class_init (GHbciContextClass *class)
      * @msg: message
      * @optional: optional string (depends on reason)
      *
-     * Called when hbci4java needs additional input
+     * Called when hbci4java needs additional input, like account information
+     * or credentials
      *
      * Return: (transfer full): answer, if required by reason
      **/
@@ -303,6 +287,9 @@ void my_status(JNIEnv *jni_env, jobject this, jobject passport, jint statusTag, 
     printf("status-callback\n");
 }
 
+/*
+ * Helper to fetch HBCIHandler-object from internal cache
+ */
 jobject get_hbci_handler(GHbciContext* self, const gchar* blz, const gchar* userid) {
     GHbciContextPrivate* priv;
     jobject hbci_handler;
@@ -317,6 +304,9 @@ jobject get_hbci_handler(GHbciContext* self, const gchar* blz, const gchar* user
     return hbci_handler;
 }
 
+/*
+ * Helper to fetch Konto-object from internal cache
+ */
 jobject get_account(GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number) {
     GHbciContextPrivate* priv;
     jobject account;
@@ -337,8 +327,7 @@ jobject get_account(GHbciContext* self, const gchar* blz, const gchar* userid, c
 /**
  * ghbci_context_new: (constructor)
  *
- * Constructs a new object asynchronously. The actual instance is
- * obtained with gfreenect_device_new_finish() when @callback is called.
+ * Sets up a new #GHbciContext object
  *
  * Returns: (transfer full): A New #GHbciContext
  **/
@@ -359,7 +348,7 @@ ghbci_context_new ()
     priv->accounts      = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     // initialize java virtual machine
-    // Path to the java source code     
+    // Path to hbci4java.jar
     options.optionString = "-Djava.class.path=hbci4java.jar"; 
     vm_args.version = JNI_VERSION_1_6; //JDK version. This indicates version 1.6
     vm_args.nOptions = 1;
@@ -371,7 +360,8 @@ ghbci_context_new ()
         (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
         return NULL;
     }
-    // pure evil, save context object in jni environment, so it can be accessed from native callback functions
+    // pure evil, save context object in reserved field of jni environment struct,
+    // so it can be accessed from native callback functions
     (*(struct JNINativeInterface_**)priv->jni_env)->reserved3 = context;
 
     // save references to java classes and methods
@@ -522,8 +512,7 @@ ghbci_context_new ()
  * @self: The #GHbciContext
  * @blz: BLZ to resolve
  *
- * Stops the video camera stream that was previously started with
- * gfreenect_device_start_video_stream().
+ * get bank name for BLZ
  *
  * Returns: (transfer full): bank name
  **/
@@ -556,10 +545,11 @@ ghbci_context_get_name_for_blz (GHbciContext* self, const gchar* blz)
 /**
  * ghbci_context_blz_foreach:
  * @self: The #GHbciContext
- * @func: (scope call): function called for each blz
+ * @func: (scope call): function called for each bank
  * @user_data: data for @func
  *
- * TODO
+ * iterator over list of german banks included with hbci4java and call the
+ * callback for each of them
  **/
 void
 ghbci_context_blz_foreach (GHbciContext* self, GHbciBlzFunc func, gpointer user_data)
@@ -597,6 +587,9 @@ ghbci_context_blz_foreach (GHbciContext* self, GHbciBlzFunc func, gpointer user_
  * @self: The #GHbciContext
  * @blz: blz
  * @userid: userid
+ *
+ * Add bank account to passport file. Triggers #callback signal for additional
+ * account details and credentials and fetches account capabilities online.
  *
  * Return: TRUE if successful
  **/
@@ -657,6 +650,8 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
  * @blz: blz
  * @userid: userid
  *
+ * Get list of bank accounts visible by this userid
+ *
  * Return: (element-type GHbciAccount) (transfer full): List of #GHbciAccount objects
  **/
 GSList*
@@ -711,6 +706,8 @@ ghbci_context_get_accounts (GHbciContext* self, const gchar* blz, const gchar* u
  * @self: The #GHbciContext
  * @blz: blz
  * @userid: userid
+ *
+ * Fetch balances of bank accounts
  *
  * Return: (transfer full): value
  **/
@@ -807,6 +804,9 @@ ghbci_context_get_balances (GHbciContext* self, const gchar* blz, const gchar* u
  * @self: The #GHbciContext
  * @blz: blz
  * @userid: userid
+ * @number: bank account number
+ *
+ * Fetch all statements for a bank account
  *
  * Return: (element-type GHbciStatement) (transfer full): List of #GHbciStatement objects
  **/

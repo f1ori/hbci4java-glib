@@ -18,8 +18,12 @@
 
 /**
  * SECTION:ghbci-statement
- * @short_description: Object representing a hbci4java java vm
+ * @short_description: bank statement
  *
+ * Wraps a single bank statement
+ *
+ * Attributes of hbci4java UmsLine object are extracted and unified across
+ * banks 
  **/
 
 #include <jni.h>
@@ -102,6 +106,8 @@ ghbci_statement_class_init (GHbciStatementClass *class)
 
     /**
      * GHbciStatement:valuta
+     *
+     * date, transaction accounted for value in bank account
      **/
     g_object_class_install_property (obj_class,
                                      PROP_VALUTA,
@@ -113,6 +119,8 @@ ghbci_statement_class_init (GHbciStatementClass *class)
 
     /**
      * GHbciStatement:booking-date
+     *
+     * date transaction was booked and appeared in statements
      **/
     g_object_class_install_property (obj_class,
                                      PROP_BOOKING_DATE,
