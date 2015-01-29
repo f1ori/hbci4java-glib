@@ -65,7 +65,6 @@ GHbci_0_1_gir_INCLUDES = GObject-2.0
 GHbci_0_1_gir_CFLAGS = $(AM_CPPFLAGS)
 GHbci_0_1_gir_PACKAGES =
 GHbci_0_1_gir_LIBS = libghbci-0.1.la
-GHbci_0_1_gir_LDFLAGS = -L/usr/lib/jvm/java/jre/lib/amd64/server
 GHbci_0_1_gir_FILES = $(introspection_sources)
 GHbci_0_1_gir_NAMESPACE = GHbci
 GHbci_0_1_gir_VERSION = 0.1

@@ -54,6 +54,11 @@ AC_SUBST(GHBCI_VERSION)
 # Introspection
 GOBJECT_INTROSPECTION_CHECK([1.38.0])
 
+dnl Replace libtool with a wrapper that clobbers dependency_libs in *.la files
+dnl http://lists.fedoraproject.org/pipermail/devel/2010-November/146343.html
+LIBTOOL='bash $(top_srcdir)/libtool-kill-dependency_libs.sh $(top_builddir)/libtool'
+AC_SUBST([LIBTOOL])
+
 # Output
 AC_SUBST(GHBCI_CFLAGS)
 AC_SUBST(GHBCI_LIBS)
