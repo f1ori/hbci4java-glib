@@ -96,7 +96,7 @@ ghbci_context_class_init (GHbciContextClass *class)
               0,
               NULL /* accumulator */,
               NULL /* accumulator data */,
-              ghbci_marshal_VOID__INT64_STRING_STRING,
+              ghbci_marshal_STRING__INT64_STRING_STRING,
               G_TYPE_STRING /* return_type */,
               3 /* n_params */,
               G_TYPE_INT64, G_TYPE_STRING, G_TYPE_STRING, NULL/* param_types */);
@@ -163,6 +163,7 @@ ghbci_context_init (GHbciContext *self)
     priv->class_StringBuffer = NULL;
     priv->class_Date = NULL;
     priv->method_HBCIUtils_getNameForBLZ = NULL;
+    priv->method_HBCIUtils_getPinTanURLForBLZ = NULL;
     priv->method_HBCIUtils_init = NULL;
     priv->method_HBCIUtils_setParam = NULL;
     priv->method_HBCIHandler_constructor = NULL;
@@ -404,6 +405,7 @@ ghbci_context_new ()
     }
 
     defineJavaStaticMethod(HBCIUtils, getNameForBLZ, "(Ljava/lang/String;)Ljava/lang/String;")
+    defineJavaStaticMethod(HBCIUtils, getPinTanURLForBLZ, "(Ljava/lang/String;)Ljava/lang/String;")
     defineJavaStaticMethod(HBCIUtils, init, "(Ljava/util/Properties;Lorg/kapott/hbci/callback/HBCICallback;)V")
     defineJavaStaticMethod(HBCIUtils, setParam, "(Ljava/lang/String;Ljava/lang/String;)V")
     defineJavaStaticMethod(AbstractHBCIPassport, getInstance, "(Ljava/lang/String;)Lorg/kapott/hbci/passport/HBCIPassport;")
@@ -530,7 +532,7 @@ ghbci_context_get_name_for_blz (GHbciContext* self, const gchar* blz)
 
     name = (*priv->jni_env)->CallStaticObjectMethod(priv->jni_env, priv->class_HBCIUtils, priv->method_HBCIUtils_getNameForBLZ, java_blz);
     if (name == NULL) {
-        printf("empty result\n");
+        g_warning("empty result\n");
         return "";
     }
     (*priv->jni_env)->DeleteGlobalRef(priv->jni_env, java_blz);
@@ -539,6 +541,41 @@ ghbci_context_get_name_for_blz (GHbciContext* self, const gchar* blz)
     // create extra string outside of JVM
     gchar *returnString = g_strdup (nativeString);
     (*priv->jni_env)->ReleaseStringUTFChars(priv->jni_env, name, nativeString);
+    return returnString;
+}
+
+/**
+ * ghbci_context_get_pin_tan_url_for_blz:
+ * @self: The #GHbciContext
+ * @blz: BLZ to resolve
+ *
+ * get pin-tan url for BLZ
+ *
+ * Returns: (transfer full): url
+ **/
+const gchar*
+ghbci_context_get_pin_tan_url_for_blz (GHbciContext* self, const gchar* blz)
+{
+    GHbciContextPrivate* priv;
+    jstring java_blz;
+    jobject url;
+
+    g_return_val_if_fail (GHBCI_IS_CONTEXT (self), "");
+    priv = self->priv;
+
+    java_blz = (*priv->jni_env)->NewStringUTF(priv->jni_env, blz);
+
+    url = (*priv->jni_env)->CallStaticObjectMethod(priv->jni_env, priv->class_HBCIUtils, priv->method_HBCIUtils_getPinTanURLForBLZ, java_blz);
+    if (url == NULL) {
+        g_warning("empty result\n");
+        return "";
+    }
+    (*priv->jni_env)->DeleteGlobalRef(priv->jni_env, java_blz);
+
+    const char *nativeString = (*priv->jni_env)->GetStringUTFChars(priv->jni_env, url, 0);
+    // create extra string outside of JVM
+    gchar *returnString = g_strdup (nativeString);
+    (*priv->jni_env)->ReleaseStringUTFChars(priv->jni_env, url, nativeString);
     return returnString;
 }
 

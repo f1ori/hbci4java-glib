@@ -114,6 +114,8 @@ GHbciContext*     ghbci_context_new                           ();
 
 const gchar*      ghbci_context_get_name_for_blz              (GHbciContext* self, const gchar* blz);
 
+const gchar*      ghbci_context_get_pin_tan_url_for_blz       (GHbciContext* self, const gchar* blz);
+
 void              ghbci_context_blz_foreach                   (GHbciContext* self, GHbciBlzFunc func, gpointer user_data);
 
 gboolean          ghbci_context_add_passport                  (GHbciContext* self, const gchar* blz, const gchar* userid);

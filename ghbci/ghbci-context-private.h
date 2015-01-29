@@ -61,6 +61,7 @@ struct _GHbciContextPrivate
     jclass class_StringBuffer;
     jclass class_Date;
     jmethodID method_HBCIUtils_getNameForBLZ;
+    jmethodID method_HBCIUtils_getPinTanURLForBLZ;
     jmethodID method_HBCIUtils_init;
     jmethodID method_HBCIUtils_setParam;
     jmethodID method_HBCIHandler_constructor;

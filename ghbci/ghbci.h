@@ -1,5 +1,5 @@
 /*
- * ghbci-statement-private.h
+ * ghbci.h
  *
  * ghbci - A GObject wrapper of the hbci4java library
  * Copyright (C) 2014-2015 Florian Richter
@@ -16,14 +16,11 @@
  * for more details.
  */
 
-#ifndef __GHBCI_STATEMENT_PRIVATE_H__
-#define __GHBCI_STATEMENT_PRIVATE_H__
+#ifndef __GHBCI_H__
+#define __GHBCI_H__
 
-#include <glib.h>
-#include <glib-object.h>
-#include <jni.h>
+#include <ghbci-statement.h>
+#include <ghbci-account.h>
+#include <ghbci-context.h>
 
-GHbciStatement* ghbci_statement_new_with_jobject (GHbciContext* context, jobject jobj);
-
-#endif /* __GHBCI_STATEMENT_PRIVATE_H__ */
-
+#endif /* __GHBCI_CONTEXT_H__ */
