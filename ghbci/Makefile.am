@@ -10,6 +10,7 @@ DISTCLEANFILES =
 lib_LTLIBRARIES =
 bin_PROGRAMS =
 
+
 AM_CPPFLAGS += \
 	$(GHBCI_CFLAGS) \
 	$(NULL)
@@ -18,11 +19,14 @@ AM_CFLAGS += \
 	$(GHBCI_CFLAGS) \
 	$(NULL)
 
+
 ghbci-marshal.h: marshal.list
 	-glib-genmarshal --header --prefix=ghbci_marshal marshal.list > $@
 ghbci-marshal.c: marshal.list
 	-glib-genmarshal --body --prefix=ghbci_marshal marshal.list > $@
 BUILT_SOURCES += ghbci-marshal.c ghbci-marshal.h
+CLEANFILES += ghbci-marshal.c ghbci-marshal.h
+
 
 source_public_h = \
 	$(top_srcdir)/ghbci/ghbci-statement.h \
@@ -33,6 +37,7 @@ source_public_h = \
 source_private_h = \
 	$(top_srcdir)/ghbci/ghbci-statement-private.h \
 	$(top_srcdir)/ghbci/ghbci-account-private.h \
+	$(top_srcdir)/ghbci/ghbci-marshal.h \
 	$(NULL)
 
 source_c = \
@@ -49,8 +54,13 @@ ghbciincludedir = $(includedir)/ghbci
 ghbciinclude_DATA = \
 	$(source_public_h) \
 	$(source_private_h) \
-	ghbci-marshal.h \
 	$(NULL)
+
+
+jardir = $(pkgdatadir)
+jar_DATA = hbci4java.jar
+EXTRA_DIST += hbci4java.jar test.py
+
 
 -include $(INTROSPECTION_MAKEFILE)
 INTROSPECTION_GIRS = GHbci_0_1_gir
@@ -78,3 +88,4 @@ typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
 CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
+
