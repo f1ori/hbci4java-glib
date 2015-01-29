@@ -24,6 +24,7 @@ PKG_CHECK_MODULES([GOBJECT], [gobject-2.0 >= 2.38])
 # Checks for typedefs, structures, and compiler characteristics
 AC_PROG_CC_STDC
 
+
 # JNI paths (TODO: should be autodetected)
 JAVA_HOME="/usr/lib/jvm/java"
 JAVA_LIBS="-R$JAVA_HOME/jre/lib/amd64/server -L$JAVA_HOME/jre/lib/amd64/server -ljvm"
@@ -37,7 +38,7 @@ GHBCI_LIBS="$JAVA_LIBS $GOBJECT_LIBS"
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-portability])
 AM_PATH_GLIB_2_0
-AM_PROG_AR
+AC_PROG_LIBTOOL
 AM_SILENT_RULES([yes])
 LT_INIT
 
@@ -54,6 +55,10 @@ AC_SUBST(GHBCI_VERSION)
 # Introspection
 GOBJECT_INTROSPECTION_CHECK([1.38.0])
 
+# GTK Doc
+GTK_DOC_CHECK([1.14])
+AM_CONDITIONAL([BUILD_GTK_DOC], [test "x$enable_gtk_doc" = "xyes" || test ! -f "autogen.sh"])
+
 dnl Replace libtool with a wrapper that clobbers dependency_libs in *.la files
 dnl http://lists.fedoraproject.org/pipermail/devel/2010-November/146343.html
 LIBTOOL='bash $(top_srcdir)/libtool-kill-dependency_libs.sh $(top_builddir)/libtool'
@@ -63,6 +68,6 @@ AC_SUBST([LIBTOOL])
 AC_SUBST(GHBCI_CFLAGS)
 AC_SUBST(GHBCI_LIBS)
 
-AC_CONFIG_FILES([Makefile ghbci/Makefile])
+AC_CONFIG_FILES([Makefile ghbci/Makefile doc/Makefile doc/reference/Makefile])
 
 AC_OUTPUT
