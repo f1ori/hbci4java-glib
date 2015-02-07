@@ -1,8 +1,9 @@
 m4_define([ghbci_major_version], [0])
-m4_define([ghbci_minor_version], [0])
-m4_define([ghbci_micro_version], [1])
+m4_define([ghbci_minor_version], [1])
+m4_define([ghbci_micro_version], [0])
 
 m4_define([ghbci_version], [ghbci_major_version.ghbci_minor_version.ghbci_micro_version])
+m4_define([ghbci_api_version], [ghbci_major_version.ghbci_minor_version])
 
 AC_PREREQ(2.69)
 
@@ -47,10 +48,15 @@ GHBCI_MAJOR_VERSION=ghbci_major_version
 GHBCI_MINOR_VERSION=ghbci_minor_version
 GHBCI_MICRO_VERSION=ghbci_micro_version
 GHBCI_VERSION=ghbci_version
+GHBCI_API_VERSION=ghbci_api_version
 AC_SUBST(GHBCI_MAJOR_VERSION)
 AC_SUBST(GHBCI_MINOR_VERSION)
 AC_SUBST(GHBCI_MICRO_VERSION)
 AC_SUBST(GHBCI_VERSION)
+AC_SUBST(GHBCI_API_VERSION)
+
+# enable pkg-config
+PKG_PROG_PKG_CONFIG
 
 # Introspection
 GOBJECT_INTROSPECTION_CHECK([1.38.0])
@@ -68,6 +74,6 @@ AC_SUBST([LIBTOOL])
 AC_SUBST(GHBCI_CFLAGS)
 AC_SUBST(GHBCI_LIBS)
 
-AC_CONFIG_FILES([Makefile ghbci/Makefile doc/Makefile doc/reference/Makefile])
+AC_CONFIG_FILES([Makefile ghbci/Makefile ghbci/ghbci-0.1.pc doc/Makefile doc/reference/Makefile])
 
 AC_OUTPUT

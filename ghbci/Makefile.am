@@ -10,6 +10,13 @@ DISTCLEANFILES =
 lib_LTLIBRARIES =
 bin_PROGRAMS =
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = ghbci-@GHBCI_API_VERSION@.pc
+
+CLEANFILES += *~ ghbci-@GHBCI_API_VERSION@.pc
+
+library_includedir=$(includedir)/ghbci
+library_include_HEADERS = ghbci.h
 
 AM_CPPFLAGS += \
 	$(GHBCI_CFLAGS) \
