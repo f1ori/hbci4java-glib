@@ -20,3 +20,8 @@ ghbci-marshal.c
 ghbci-marshal.h
 libghbci.so
 stamp-h1
+*.stamp
+*.la
+ghbci/ghbci-0.1.pc
+ghbci/GHbci_0_1_gir
+libtool
