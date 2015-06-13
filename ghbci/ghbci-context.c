@@ -731,7 +731,7 @@ ghbci_context_get_accounts (GHbciContext* self, const gchar* blz, const gchar* u
 
         char* key = g_strconcat(blz, "+", userid, "+", number, NULL);
         g_hash_table_insert(priv->accounts, key, element);
-        g_free(key);
+
         g_free (number);
     }
 
