@@ -51,6 +51,7 @@ enum
 {
     CALLBACK,
     LOG,
+    STATUS,
     LAST_SIGNAL
 };
 
@@ -120,6 +121,26 @@ ghbci_context_class_init (GHbciContextClass *class)
               G_TYPE_NONE /* return_type */,
               2 /* n_params */,
               G_TYPE_STRING, G_TYPE_INT64, NULL/* param_types */);
+
+    /**
+     * GHbciContext::status:
+     * @self: The #GHbciContext
+     * @status: type
+     * @obj: list of objects
+     *
+     * Called when hbci4java logs something
+     **/
+    ghbci_context_signals[STATUS] =
+        g_signal_new ("status",
+              G_TYPE_FROM_CLASS (obj_class),
+              G_SIGNAL_RUN_LAST,
+              0,
+              NULL /* accumulator */,
+              NULL /* accumulator data */,
+              ghbci_marshal_VOID__INT64_STRING,
+              G_TYPE_NONE /* return_type */,
+              2 /* n_params */,
+              G_TYPE_INT64, G_TYPE_STRING, NULL/* param_types */);
 
 
     /* add private structure */
@@ -284,8 +305,10 @@ void my_callback(JNIEnv *jni_env, jobject this, jobject passport, jint reason, j
  */
 void my_status(JNIEnv *jni_env, jobject this, jobject passport, jint statusTag, jarray o)
 {
-    //GHbciContext* context = (*jni_env)->reserved3;
-    printf("status-callback\n");
+    GHbciContext* context = (*jni_env)->reserved3;
+    //const char *msg = (*jni_env)->GetStringUTFChars(jni_env, jmsg, NULL);
+    g_signal_emit (context, ghbci_context_signals[STATUS], 0, statusTag, "");
+    //(*jni_env)->ReleaseStringUTFChars(jni_env, jmsg, msg);
 }
 
 /*
