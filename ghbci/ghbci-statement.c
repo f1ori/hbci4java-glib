@@ -433,27 +433,53 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
         priv->other_bic = ghbci_statement_jstring_to_cstring(jni_env, jbic);
     }
 
+    return statement;
+}
+
+void
+ghbci_statement_prettify_statement (GObject* statement)
+{
+    gchar *reference;
+    gchar *other_iban;
+    gchar *other_bic;
+    g_object_get(statement,
+                 "reference", &reference,
+                 "other-iban", &other_iban,
+                 "other-bic", &other_bic,
+                 NULL);
+
     // fix iban and bic for volksbank
     // TODO rewrite with different lengths of iban and bics in mind
-    gint len = strlen (priv->reference);
+    gint len = strlen (reference);
     if (len > 44) {
         gchar buffer[7];
-        g_strlcpy (buffer, priv->reference + len - 44, 7);
+        g_strlcpy (buffer, reference + len - 44, 7);
         if (g_strcmp0(buffer, "IBAN: ")) {
-            g_strlcpy (buffer, priv->reference + len - 16, 7);
+            g_strlcpy (buffer, reference + len - 16, 7);
             if (g_strcmp0(buffer, "BIC: ")) {
-                g_free (priv->other_iban);
-                g_free (priv->other_bic);
-                priv->other_iban = g_strndup (priv->reference + len - 39, 22);
-                priv->other_bic = g_strndup (priv->reference + len - 11, 11);
-                priv->reference[len - 46] = '\0';
+                g_free (other_iban);
+                g_free (other_bic);
+                other_iban = g_strndup (reference + len - 39, 22);
+                other_bic = g_strndup (reference + len - 11, 11);
+                reference[len - 46] = '\0';
             }
         }
     }
 
-    return statement;
-}
+    if (g_str_has_prefix(reference, "SVWZ+")) {
+        gchar *reference_new = g_strndup (reference + 5, len - 5);
+        g_free (reference);
+        reference = reference_new;
+    }
 
+
+    g_object_set(statement,
+                 "reference", reference,
+                 "other-iban", other_iban,
+                 "other-bic", other_bic,
+                 NULL);
+    g_free (reference);
+}
 
 
 // vim: sw=4 expandtab
