@@ -59,6 +59,7 @@ struct _GHbciStatementPrivate
     gchar* other_name;
     gchar* other_bic;
     gchar* other_iban;
+    gchar* transaction_type;
 };
 
 /* properties */
@@ -74,6 +75,7 @@ enum
     PROP_OTHER_NAME,
     PROP_OTHER_IBAN,
     PROP_OTHER_BIC,
+    PROP_TRANSACTION_TYPE,
 };
 
 static void     ghbci_statement_class_init         (GHbciStatementClass *class);
@@ -220,6 +222,20 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "not-set" /* default value*/,
                                                           G_PARAM_READABLE));
 
+    /**
+     * GHbciStatement:transaction-type
+     *
+     * type of transaction
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_TRANSACTION_TYPE,
+                                     g_param_spec_string ("transaction-type",
+                                                          "type of transaction",
+                                                          "type of transaction",
+                                                          "not-set" /* default value*/,
+                                                          G_PARAM_READABLE));
+
+
     /* add private structure */
     g_type_class_add_private (obj_class, sizeof (GHbciStatementPrivate));
 }
@@ -241,6 +257,7 @@ ghbci_statement_init (GHbciStatement *self)
     priv->other_name = NULL;
     priv->other_bic = NULL;
     priv->other_iban = NULL;
+    priv->transaction_type = NULL;
 }
 
 static void
@@ -260,6 +277,7 @@ ghbci_statement_dispose (GObject *obj)
     g_free(priv->other_name);
     g_free(priv->other_bic);
     g_free(priv->other_iban);
+    g_free(priv->transaction_type);
 
     G_OBJECT_CLASS (ghbci_statement_parent_class)->dispose (obj);
 }
@@ -341,6 +359,10 @@ ghbci_statement_get_property (GObject    *obj,
 
     case PROP_OTHER_BIC:
         g_value_set_string (value, priv->other_bic);
+        break;
+
+    case PROP_TRANSACTION_TYPE:
+        g_value_set_string (value, priv->transaction_type);
         break;
 
     default:
@@ -441,6 +463,9 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
         jstring jbic = (*jni_env)->GetObjectField(jni_env, other, context->priv->field_Konto_blz);
         priv->other_bic = ghbci_statement_jstring_to_cstring(jni_env, jbic);
     }
+
+    jstring jtransaction_type = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_text);
+    priv->transaction_type = ghbci_statement_jstring_to_cstring(jni_env, jtransaction_type);
 
     return statement;
 }

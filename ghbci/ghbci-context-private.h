@@ -117,6 +117,7 @@ struct _GHbciContextPrivate
     jfieldID field_GVRKUmsUmsLine_gvcode;
     jfieldID field_GVRKUmsUmsLine_usage;
     jfieldID field_GVRKUmsUmsLine_other;
+    jfieldID field_GVRKUmsUmsLine_text;
 };
 
 #endif /* __GHBCI_CONTEXT_PRIVATE_H__ */

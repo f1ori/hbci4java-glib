@@ -235,6 +235,7 @@ ghbci_context_init (GHbciContext *self)
     priv->field_GVRKUmsUmsLine_gvcode = NULL;
     priv->field_GVRKUmsUmsLine_usage = NULL;
     priv->field_GVRKUmsUmsLine_other = NULL;
+    priv->field_GVRKUmsUmsLine_text = NULL;
 }
 
 static void
@@ -523,6 +524,7 @@ ghbci_context_new ()
     defineJavaField(GVRKUmsUmsLine, gvcode, "Ljava/lang/String;");
     defineJavaField(GVRKUmsUmsLine, usage, "Ljava/util/List;");
     defineJavaField(GVRKUmsUmsLine, other, "Lorg/kapott/hbci/structures/Konto;");
+    defineJavaField(GVRKUmsUmsLine, text, "Ljava/lang/String;");
 
     // initialize hbci4java
     console = (*priv->jni_env)->NewObject(priv->jni_env, priv->class_HBCICallbackNative, priv->method_HBCICallbackNative_constructor);
