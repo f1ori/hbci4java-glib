@@ -500,19 +500,51 @@ ghbci_statement_prettify_statement (GObject* statement)
         }
     }
 
-    if (g_str_has_prefix(reference, "SVWZ+")) {
-        gchar *reference_new = g_strndup (reference + 5, len - 5);
-        g_free (reference);
-        reference = reference_new;
-    }
+    // extract SEPA fields from reference
+    while (reference[4] == '+') {
+        if (g_str_has_prefix(reference, "EREF+")
+                || g_str_has_prefix(reference, "MREF+")
+                || g_str_has_prefix(reference, "CRED+")) {
 
+            // detemine field size
+            gint end = 4;
+            while (!g_ascii_isspace(reference[end]))
+                ++end;
+
+            // save field
+            gchar* value = g_strndup(reference + 5, end - 5);
+            if (g_str_has_prefix(reference, "EREF+"))
+                g_object_set(statement, "eref", value, NULL);
+            else if (g_str_has_prefix(reference, "MREF+"))
+                g_object_set(statement, "mref", value, NULL);
+            else if (g_str_has_prefix(reference, "CRED+"))
+                g_object_set(statement, "cred", value, NULL);
+
+            // remove field
+            memmove(reference, reference + end + 1, strlen(reference + end + 1) + 1);
+
+        } else if (g_str_has_prefix(reference, "SVWZ+")) {
+            // always last field
+            memmove(reference, reference + 5, strlen(reference + 5) + 1);
+            // remove newlines, they never make sense in SEPA fields
+            for (gint i = 0; reference[i] != '\0'; ++i) {
+                if (reference[i] == '\n') {
+                    memmove(reference + i, reference + i + 1, strlen(reference + i + 1) + 1);
+                }
+            }
+            break;
+
+        } else {
+            // doesn't seem to be a SEPA field, don't look for further fields
+            break;
+        }
+    }
 
     g_object_set(statement,
                  "reference", reference,
                  "other-iban", other_iban,
                  "other-bic", other_bic,
                  NULL);
-    g_free (reference);
 }
 
 
