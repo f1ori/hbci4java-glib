@@ -408,8 +408,17 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
         }
 
         const char* usage_line = (*jni_env)->GetStringUTFChars(jni_env, jusage_line, 0);
-        g_string_append(reference, usage_line);
+        gchar* usage_line_without_whitespace = g_strdup(usage_line);
+        g_strchomp(usage_line_without_whitespace);
+
+        g_string_append(reference, usage_line_without_whitespace);
+
+        if (g_strcmp0(usage_line_without_whitespace, "") != 0) {
+            g_string_append(reference, "\n");
+        }
+
         (*jni_env)->ReleaseStringUTFChars(jni_env, jusage_line, usage_line);
+        g_free(usage_line_without_whitespace);
     }
     priv->reference = g_string_free(reference, FALSE);
     
@@ -454,9 +463,9 @@ ghbci_statement_prettify_statement (GObject* statement)
     if (len > 44) {
         gchar buffer[7];
         g_strlcpy (buffer, reference + len - 44, 7);
-        if (g_strcmp0(buffer, "IBAN: ")) {
+        if (g_strcmp0(buffer, "IBAN: ") == 0) {
             g_strlcpy (buffer, reference + len - 16, 7);
-            if (g_strcmp0(buffer, "BIC: ")) {
+            if (g_strcmp0(buffer, "BIC: ") == 0) {
                 g_free (other_iban);
                 g_free (other_bic);
                 other_iban = g_strndup (reference + len - 39, 22);
