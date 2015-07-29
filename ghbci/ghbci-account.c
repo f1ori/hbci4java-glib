@@ -53,14 +53,13 @@ enum
 {
     PROP_0,
     PROP_ACCOUNT_TYPE,
-    PROP_TYPE,
     PROP_BIC,
     PROP_BLZ,
     PROP_COUNTRY,
     PROP_CURRENCY,
     PROP_CUSTOMERID,
     PROP_IBAN,
-    PROP_NAME,
+    PROP_OWNER_NAME,
     PROP_NUMBER,
     PROP_SUBNUMBER
 };
@@ -131,14 +130,14 @@ ghbci_account_class_init (GHbciAccountClass *class)
                                                           G_PARAM_READWRITE));
 
     /**
-     * GHbciAccount:name
+     * GHbciAccount:owner-name
      *
      * Owner name
      **/
     g_object_class_install_property (obj_class,
-                                     PROP_NAME,
-                                     g_param_spec_string ("name",
-                                                          "Name",
+                                     PROP_OWNER_NAME,
+                                     g_param_spec_string ("owner-name",
+                                                          "Owner Name",
                                                           "owner name",
                                                           "no-name-set" /* default value*/,
                                                           G_PARAM_READWRITE));
@@ -240,9 +239,6 @@ ghbci_account_set_property (GObject      *obj,
         (*context_priv->jni_env)->SetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_subnumber, jvalue);
         break;
     case PROP_ACCOUNT_TYPE:
-        (*context_priv->jni_env)->SetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_acctype, jvalue);
-        break;
-    case PROP_TYPE:
         (*context_priv->jni_env)->SetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_type, jvalue);
         break;
     case PROP_CURRENCY:
@@ -251,7 +247,7 @@ ghbci_account_set_property (GObject      *obj,
     case PROP_CUSTOMERID:
         (*context_priv->jni_env)->SetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_customerid, jvalue);
         break;
-    case PROP_NAME:
+    case PROP_OWNER_NAME:
         (*context_priv->jni_env)->SetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_name, jvalue);
         break;
     case PROP_BIC:
@@ -298,9 +294,6 @@ ghbci_account_get_property (GObject    *obj,
         java_value = (*context_priv->jni_env)->GetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_subnumber);
         break;
     case PROP_ACCOUNT_TYPE:
-        java_value = (*context_priv->jni_env)->GetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_acctype);
-        break;
-    case PROP_TYPE:
         java_value = (*context_priv->jni_env)->GetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_type);
         break;
     case PROP_CURRENCY:
@@ -309,7 +302,7 @@ ghbci_account_get_property (GObject    *obj,
     case PROP_CUSTOMERID:
         java_value = (*context_priv->jni_env)->GetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_customerid);
         break;
-    case PROP_NAME:
+    case PROP_OWNER_NAME:
         java_value = (*context_priv->jni_env)->GetObjectField(context_priv->jni_env, priv->account_jobj, context_priv->field_Konto_name);
         break;
     case PROP_BIC:
@@ -323,9 +316,11 @@ ghbci_account_get_property (GObject    *obj,
         G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, prop_id, pspec);
         return;
     }
-    const char* nativeString = (*context_priv->jni_env)->GetStringUTFChars(context_priv->jni_env, java_value, 0);
-    g_value_set_string (value, nativeString);
-    (*context_priv->jni_env)->ReleaseStringUTFChars(context_priv->jni_env, java_value, nativeString);
+    if (java_value != NULL) {
+        const char* nativeString = (*context_priv->jni_env)->GetStringUTFChars(context_priv->jni_env, java_value, 0);
+        g_value_set_string (value, nativeString);
+        (*context_priv->jni_env)->ReleaseStringUTFChars(context_priv->jni_env, java_value, nativeString);
+    }
 }
 
 GHbciAccount*
