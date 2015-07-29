@@ -288,8 +288,6 @@ void my_callback(JNIEnv *jni_env, jobject this, jobject passport, jint reason, j
     (*jni_env)->ReleaseStringUTFChars(jni_env, jmsg, msg);
     (*jni_env)->ReleaseStringUTFChars(jni_env, joptional, optional);
 
-    printf("return: %s\n", retvalue);
-
     // return result as StringBuffer in parameter retData
     (*jni_env)->CallObjectMethod(jni_env, retData, context->priv->method_StringBuffer_setLength, 0);
     if (retvalue != NULL) {
