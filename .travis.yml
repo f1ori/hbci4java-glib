@@ -1,7 +1,0 @@
-compiler: gcc
-language: c
-sudo: true
-before_install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -qq gtk-doc-tools
-before_script: mkdir -p build/autotools && ./autogen.sh
