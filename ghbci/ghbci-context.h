@@ -165,6 +165,12 @@ gchar*            ghbci_context_get_balances                  (GHbciContext* sel
 
 GSList*           ghbci_context_get_statements                (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number);
 
+gboolean          ghbci_context_send_transfer                 (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number,
+                                                               const gchar* source_name, const gchar* source_bic, const gchar* source_iban,
+                                                               const gchar* destination_name, const gchar* destination_bic,
+                                                               const gchar* destination_iban, const gchar* reference,
+                                                               const gchar* amount);
+
 G_END_DECLS
 
 #endif /* __GHBCI_CONTEXT_H__ */

@@ -46,6 +46,8 @@ struct _GHbciContextPrivate
     jclass class_HBCICallbackNative;
     jclass class_HBCIHandler;
     jclass class_HBCIJob;
+    jclass class_HBCIJobResult;
+    jclass class_HBCIStatus;
     jclass class_HBCIPassport;
     jclass class_AbstractHBCIPassport;
     jclass class_HBCIJobResultImpl;
@@ -68,11 +70,14 @@ struct _GHbciContextPrivate
     jmethodID method_HBCIHandler_newJob;
     jmethodID method_HBCIHandler_execute;
     jmethodID method_HBCIHandler_getPassport;
+    jmethodID method_HBCIHandler_reset;
     jmethodID method_HBCICallbackConsole_constructor;
     jmethodID method_HBCICallbackNative_constructor;
     jmethodID method_HBCIJob_setParam;
     jmethodID method_HBCIJob_addToQueue;
     jmethodID method_HBCIJob_getJobResult;
+    jmethodID method_HBCIJobResult_getJobStatus;
+    jmethodID method_HBCIStatus_getErrorString;
     jmethodID method_HBCIPassport_getAccounts;
     jmethodID method_AbstractHBCIPassport_getInstance;
     jmethodID method_HBCIJobResultImpl_isOK;

@@ -155,6 +155,19 @@ ghbci_account_class_init (GHbciAccountClass *class)
                                                           G_PARAM_READWRITE));
 
     /**
+     * GHbciAccount:iban
+     *
+     * IBAN
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_IBAN,
+                                     g_param_spec_string ("iban",
+                                                          "IBAN",
+                                                          "IBAN",
+                                                          "no-name-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
+
+    /**
      * GHbciAccount:currency
      *
      * currency

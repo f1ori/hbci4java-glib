@@ -16,7 +16,7 @@
 
 from gi.repository import GHbci
 
-import test_account
+import test_account_diba as test_account
 
 context = GHbci.Context.new()
 

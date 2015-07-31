@@ -169,6 +169,8 @@ ghbci_context_init (GHbciContext *self)
     priv->class_HBCICallbackNative = NULL;
     priv->class_HBCIHandler = NULL;
     priv->class_HBCIJob = NULL;
+    priv->class_HBCIJobResult = NULL;
+    priv->class_HBCIStatus = NULL;
     priv->class_HBCIPassport = NULL;
     priv->class_AbstractHBCIPassport = NULL;
     priv->class_HBCIJobResultImpl = NULL;
@@ -191,11 +193,14 @@ ghbci_context_init (GHbciContext *self)
     priv->method_HBCIHandler_newJob = NULL;
     priv->method_HBCIHandler_execute = NULL;
     priv->method_HBCIHandler_getPassport = NULL;
+    priv->method_HBCIHandler_reset = NULL;
     priv->method_HBCICallbackConsole_constructor = NULL;
     priv->method_HBCICallbackNative_constructor = NULL;
     priv->method_HBCIJob_setParam = NULL;
     priv->method_HBCIJob_addToQueue = NULL;
     priv->method_HBCIJob_getJobResult = NULL;
+    priv->method_HBCIJobResult_getJobStatus = NULL;
+    priv->method_HBCIStatus_getErrorString = NULL;
     priv->method_HBCIPassport_getAccounts = NULL;
     priv->method_AbstractHBCIPassport_getInstance = NULL;
     priv->method_HBCIJobResultImpl_isOK = NULL;
@@ -404,6 +409,8 @@ ghbci_context_new ()
     defineJavaClass(HBCICallbackNative, "org/kapott/hbci/callback/HBCICallbackNative")
     defineJavaClass(HBCIHandler, "org/kapott/hbci/manager/HBCIHandler")
     defineJavaClass(HBCIJob, "org/kapott/hbci/GV/HBCIJob")
+    defineJavaClass(HBCIJobResult, "org/kapott/hbci/GV_Result/HBCIJobResult")
+    defineJavaClass(HBCIStatus, "org/kapott/hbci/status/HBCIStatus")
     defineJavaClass(HBCIPassport, "org/kapott/hbci/passport/HBCIPassport")
     defineJavaClass(AbstractHBCIPassport, "org/kapott/hbci/passport/AbstractHBCIPassport")
     defineJavaClass(HBCIJobResultImpl, "org/kapott/hbci/GV_Result/HBCIJobResultImpl")
@@ -441,9 +448,12 @@ ghbci_context_new ()
     defineJavaMethod(HBCIHandler, newJob, "(Ljava/lang/String;)Lorg/kapott/hbci/GV/HBCIJob;")
     defineJavaMethod(HBCIHandler, execute, "()Lorg/kapott/hbci/status/HBCIExecStatus;")
     defineJavaMethod(HBCIHandler, getPassport, "()Lorg/kapott/hbci/passport/HBCIPassport;")
+    defineJavaMethod(HBCIHandler, reset, "()V")
     defineJavaMethod(HBCIJob, setParam, "(Ljava/lang/String;Ljava/lang/String;)V")
     defineJavaMethod(HBCIJob, addToQueue, "()V")
     defineJavaMethod(HBCIJob, getJobResult, "()Lorg/kapott/hbci/GV_Result/HBCIJobResult;")
+    defineJavaMethod(HBCIJobResult, getJobStatus, "()Lorg/kapott/hbci/status/HBCIStatus;")
+    defineJavaMethod(HBCIStatus, getErrorString, "()Ljava/lang/String;")
     defineJavaMethod(HBCIPassport, getAccounts, "()[Lorg/kapott/hbci/structures/Konto;")
     defineJavaMethod(HBCIJobResultImpl, isOK, "()Z")
     defineJavaMethod(GVRSaldoReq, getEntries, "()[Lorg/kapott/hbci/GV_Result/GVRSaldoReq$Info;")
@@ -670,6 +680,8 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
     jobject handler;
 
     g_return_val_if_fail (GHBCI_IS_CONTEXT (self), FALSE);
+    g_return_val_if_fail (blz != NULL, FALSE);
+    g_return_val_if_fail (userid != NULL, FALSE);
     priv = self->priv;
 
     java_version = (*priv->jni_env)->NewStringUTF(priv->jni_env, "300");
@@ -680,7 +692,7 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
     java_one = (*priv->jni_env)->NewStringUTF(priv->jni_env, "1");
     pinTanInit_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "client.passport.PinTan.init");
     loglevel_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "log.loglevel.default");
-    loglevel_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, "2");
+    loglevel_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, "5");
 
     (*priv->jni_env)->CallStaticVoidMethod(priv->jni_env, priv->class_HBCIUtils, priv->method_HBCIUtils_setParam, filename_key, java_filename);
     (*priv->jni_env)->CallStaticVoidMethod(priv->jni_env, priv->class_HBCIUtils, priv->method_HBCIUtils_setParam, checkcert_key, java_one);
@@ -955,4 +967,124 @@ ghbci_context_get_statements (GHbciContext* self, const gchar* blz, const gchar*
     }
     return statements;
 }
+
+
+/**
+ * ghbci_context_send_transfer:
+ * @self: The #GHbciContext
+ * @blz: blz
+ * @userid: userid
+ * @number: account number
+ * @destination_name: name of recipient
+ * @destination_bic: bic
+ * @destination_iban: iban
+ * @reference: reference used in transfer
+ * @amount: amount to transfer
+ *
+ * Send SEPA transfer
+ *
+ * Return: true of successful
+ **/
+gboolean
+ghbci_context_send_transfer (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number,
+        const gchar* source_name, const gchar* source_bic, const gchar* source_iban,
+        const gchar* destination_name, const gchar* destination_bic, const gchar* destination_iban,
+        const gchar* reference, const gchar* amount)
+{
+    GHbciContextPrivate* priv;
+    jobject job;
+    jobject status;
+    jstring java_jobname;
+    gchar *value;
+
+    g_return_val_if_fail (GHBCI_IS_CONTEXT (self), NULL);
+    priv = self->priv;
+
+    jobject hbci_handler = get_hbci_handler(self, blz, userid);
+    if(hbci_handler == NULL) {
+        g_warning("no handler found");
+        return FALSE;
+    }
+
+    (*priv->jni_env)->CallVoidMethod(priv->jni_env, hbci_handler, priv->method_HBCIHandler_reset);
+
+    java_jobname = (*priv->jni_env)->NewStringUTF(priv->jni_env, "UebSEPA"); // TODO: support TermUebSEPA
+    job = (*priv->jni_env)->CallObjectMethod(priv->jni_env, hbci_handler, priv->method_HBCIHandler_newJob, java_jobname);
+    if (job == NULL) {
+        g_warning("newJob failed");
+        (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
+        return FALSE;
+    }
+
+    jstring country_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "src.country");
+    jstring country_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, "DE");
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, country_key, country_value);
+    jstring blz_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "src.blz");
+    jstring blz_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, blz);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, blz_key, blz_value);
+    jstring number_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "src.number");
+    jstring number_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, number);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, number_key, number_value);
+
+    jstring src_name_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "src.name");
+    jstring src_name_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, source_name);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, src_name_key, src_name_value);
+    jstring src_bic_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "src.bic");
+    jstring src_bic_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, source_bic);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, src_bic_key, src_bic_value);
+    jstring src_iban_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "src.iban");
+    jstring src_iban_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, source_iban);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, src_iban_key, src_iban_value);
+
+    jstring dst_name_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "dst.name");
+    jstring dst_name_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, destination_name);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, dst_name_key, dst_name_value);
+    jstring dst_bic_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "dst.bic");
+    jstring dst_bic_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, destination_bic);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, dst_bic_key, dst_bic_value);
+    jstring dst_iban_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "dst.iban");
+    jstring dst_iban_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, destination_iban);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, dst_iban_key, dst_iban_value);
+
+    jstring usage_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "usage");
+    jstring usage_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, reference);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, usage_key, usage_value);
+
+    jstring amount_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "btg.value");
+    jstring amount_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, amount);
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, amount_key, amount_value);
+    jstring currency_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "btg.curr");
+    jstring currency_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, "EUR");
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_setParam, currency_key, currency_value);
+
+    (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_addToQueue);
+
+    status = (*priv->jni_env)->CallObjectMethod(priv->jni_env, hbci_handler, priv->method_HBCIHandler_execute);
+    if (status == NULL) {
+        g_warning("HBCIHandler execute failed");
+        (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
+        return FALSE;
+    }
+
+    jobject result = (*priv->jni_env)->CallObjectMethod(priv->jni_env, job, priv->method_HBCIJob_getJobResult);
+    if (result == NULL) {
+        g_warning("getJobResult failed");
+        (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
+        return FALSE;
+    }
+    jboolean isOK = (*priv->jni_env)->CallBooleanMethod(priv->jni_env, result, priv->method_HBCIJobResultImpl_isOK);
+    if (!isOK) {
+        g_warning("job failed");
+
+        jobject status = (*priv->jni_env)->CallObjectMethod(priv->jni_env, result, priv->method_HBCIJobResult_getJobStatus);
+        jstring errorstring = (*priv->jni_env)->CallObjectMethod(priv->jni_env, status, priv->method_HBCIStatus_getErrorString);
+        const gchar* nativeString = (*priv->jni_env)->GetStringUTFChars(priv->jni_env, errorstring, 0);
+        g_warning("error: %s", nativeString);
+        (*priv->jni_env)->ReleaseStringUTFChars(priv->jni_env, errorstring, nativeString);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
 // vim: sw=4 expandtab
