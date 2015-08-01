@@ -684,9 +684,12 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
     g_return_val_if_fail (userid != NULL, FALSE);
     priv = self->priv;
 
+    gchar* key = g_strconcat(blz, "+", userid, NULL);
+    gchar* filename = g_strconcat("./passport-", key, ".dat", NULL);
+
     java_version = (*priv->jni_env)->NewStringUTF(priv->jni_env, "300");
     java_type = (*priv->jni_env)->NewStringUTF(priv->jni_env, "PinTan");
-    java_filename = (*priv->jni_env)->NewStringUTF(priv->jni_env, "./passport-file.properties");
+    java_filename = (*priv->jni_env)->NewStringUTF(priv->jni_env, filename);
     filename_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "client.passport.PinTan.filename");
     checkcert_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "client.passport.PinTan.checkcert");
     java_one = (*priv->jni_env)->NewStringUTF(priv->jni_env, "1");
@@ -710,8 +713,9 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
         return FALSE;
     }
     
-    gchar* key = g_strconcat(blz, "+", userid, NULL);
     g_hash_table_insert(priv->hbci_handlers, key, handler);
+
+    g_free(filename);
 
     return TRUE;
 }
