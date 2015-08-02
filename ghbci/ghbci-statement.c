@@ -403,27 +403,34 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
     jint jmonth = (*jni_env)->CallIntMethod(jni_env, jvaluta, context->priv->method_Date_getMonth) + 1;
     jint jyear = (*jni_env)->CallIntMethod(jni_env, jvaluta, context->priv->method_Date_getYear) + 1900;
     priv->valuta = g_date_new_dmy(jdate, jmonth, jyear);
+    (*jni_env)->DeleteLocalRef(jni_env, jvaluta);
 
     jobject jbdate = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_bdate);
     jdate = (*jni_env)->CallIntMethod(jni_env, jbdate, context->priv->method_Date_getDate);
     jmonth = (*jni_env)->CallIntMethod(jni_env, jbdate, context->priv->method_Date_getMonth) + 1;
     jyear = (*jni_env)->CallIntMethod(jni_env, jbdate, context->priv->method_Date_getYear) + 1900;
     priv->booking_date = g_date_new_dmy(jdate, jmonth, jyear);
+    (*jni_env)->DeleteLocalRef(jni_env, jbdate);
 
     jobject jvalue        = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_value);
     jobject jvalue_string = (*jni_env)->CallObjectMethod(jni_env, jvalue, context->priv->method_Value_toString);
     priv->value = ghbci_statement_jstring_to_cstring(jni_env, jvalue_string);
+    (*jni_env)->DeleteLocalRef(jni_env, jvalue_string);
+    (*jni_env)->DeleteLocalRef(jni_env, jvalue);
 
     jobject jsaldo        = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_saldo);
     jobject jsaldo_value  = (*jni_env)->GetObjectField(jni_env, jsaldo, context->priv->field_Saldo_value);
     jobject jsaldo_string = (*jni_env)->CallObjectMethod(jni_env, jsaldo_value, context->priv->method_Value_toString);
     priv->saldo = ghbci_statement_jstring_to_cstring(jni_env, jsaldo_string);
+    (*jni_env)->DeleteLocalRef(jni_env, jsaldo_string);
+    (*jni_env)->DeleteLocalRef(jni_env, jsaldo_value);
+    (*jni_env)->DeleteLocalRef(jni_env, jsaldo);
 
     jobject jusage = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_usage);
     jobject jiterator = (*jni_env)->CallObjectMethod(jni_env, jusage, context->priv->method_List_iterator);
 
     GString* reference = g_string_new(NULL);
-    while( (*jni_env)->CallObjectMethod(jni_env, jiterator, context->priv->method_Iterator_hasNext) ) {
+    while( (*jni_env)->CallBooleanMethod(jni_env, jiterator, context->priv->method_Iterator_hasNext) ) {
         jstring jusage_line = (*jni_env)->CallObjectMethod(jni_env, jiterator, context->priv->method_Iterator_next);
         if (jusage_line == NULL) {
             break;
@@ -440,12 +447,16 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
         }
 
         (*jni_env)->ReleaseStringUTFChars(jni_env, jusage_line, usage_line);
+        (*jni_env)->DeleteLocalRef(jni_env, jusage_line);
         g_free(usage_line_without_whitespace);
     }
     priv->reference = g_string_free(reference, FALSE);
+    (*jni_env)->DeleteLocalRef(jni_env, jiterator);
+    (*jni_env)->DeleteLocalRef(jni_env, jusage);
     
     jstring jgv_code = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_gvcode);
     priv->gv_code = ghbci_statement_jstring_to_cstring(jni_env, jgv_code);
+    (*jni_env)->DeleteLocalRef(jni_env, jgv_code);
 
     jobject other = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_other);
     if (other != NULL) {
@@ -453,19 +464,27 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
         jstring jname2 = (*jni_env)->GetObjectField(jni_env, other, context->priv->field_Konto_name2);
         gchar* name = ghbci_statement_jstring_to_cstring(jni_env, jname);
         gchar* name2 = ghbci_statement_jstring_to_cstring(jni_env, jname2);
+        (*jni_env)->DeleteLocalRef(jni_env, jname2);
+        (*jni_env)->DeleteLocalRef(jni_env, jname);
+
         priv->other_name = g_strconcat(name, name2, NULL);
         g_free(name);
         g_free(name2);
 
         jstring jiban = (*jni_env)->GetObjectField(jni_env, other, context->priv->field_Konto_number);
         priv->other_iban = ghbci_statement_jstring_to_cstring(jni_env, jiban);
+        (*jni_env)->DeleteLocalRef(jni_env, jiban);
 
         jstring jbic = (*jni_env)->GetObjectField(jni_env, other, context->priv->field_Konto_blz);
         priv->other_bic = ghbci_statement_jstring_to_cstring(jni_env, jbic);
+        (*jni_env)->DeleteLocalRef(jni_env, jbic);
+
+        (*jni_env)->DeleteLocalRef(jni_env, other);
     }
 
     jstring jtransaction_type = (*jni_env)->GetObjectField(jni_env, jstatement, context->priv->field_GVRKUmsUmsLine_text);
     priv->transaction_type = ghbci_statement_jstring_to_cstring(jni_env, jtransaction_type);
+    (*jni_env)->DeleteLocalRef(jni_env, jtransaction_type);
 
     return statement;
 }

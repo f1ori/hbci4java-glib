@@ -207,7 +207,7 @@ ghbci_account_dispose (GObject *obj)
     priv = GHBCI_ACCOUNT_GET_PRIVATE (self);
     context_priv = priv->context->priv;
 
-    (*context_priv->jni_env)->DeleteGlobalRef(context_priv->jni_env, priv->account_jobj);
+    (*context_priv->jni_env)->DeleteLocalRef(context_priv->jni_env, priv->account_jobj);
 
     G_OBJECT_CLASS (ghbci_account_parent_class)->dispose (obj);
 }
@@ -274,7 +274,7 @@ ghbci_account_set_property (GObject      *obj,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, prop_id, pspec);
       break;
     }
-    (*context_priv->jni_env)->DeleteGlobalRef(context_priv->jni_env, jvalue);
+    (*context_priv->jni_env)->DeleteLocalRef(context_priv->jni_env, jvalue);
 }
 
 static void
@@ -333,6 +333,8 @@ ghbci_account_get_property (GObject    *obj,
         const char* nativeString = (*context_priv->jni_env)->GetStringUTFChars(context_priv->jni_env, java_value, 0);
         g_value_set_string (value, nativeString);
         (*context_priv->jni_env)->ReleaseStringUTFChars(context_priv->jni_env, java_value, nativeString);
+
+        (*context_priv->jni_env)->DeleteLocalRef(context_priv->jni_env, java_value);
     }
 }
 
@@ -375,6 +377,7 @@ ghbci_account_new (GHbciContext* context)
     context_priv = context->priv;
     jni_env = context_priv->jni_env;
     priv->account_jobj = (*jni_env)->NewObject(jni_env, context_priv->class_Konto, context_priv->method_Konto_constructor);
+
     if (priv->account_jobj == NULL) {
         (*jni_env)->ExceptionDescribe(jni_env);
         return NULL;
