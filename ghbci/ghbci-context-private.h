@@ -40,6 +40,7 @@ struct _GHbciContextPrivate
     jclass class_Konto;
     jclass class_Saldo;
     jclass class_Value;
+    jclass class_AbortException;
     jclass class_HBCIUtilsInternal;
     jclass class_HBCIUtils;
     jclass class_HBCICallbackConsole;
