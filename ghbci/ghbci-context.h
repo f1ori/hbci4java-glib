@@ -161,6 +161,8 @@ gboolean          ghbci_context_add_passport                  (GHbciContext* sel
 
 GSList*           ghbci_context_get_accounts                  (GHbciContext* self, const gchar* blz, const gchar* userid);
 
+GHashTable*       ghbci_context_get_tan_methods               (GHbciContext* self, const gchar* blz, const gchar* userid);
+
 gchar*            ghbci_context_get_balances                  (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number);
 
 GSList*           ghbci_context_get_statements                (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number);

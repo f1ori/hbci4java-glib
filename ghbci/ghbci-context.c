@@ -174,6 +174,7 @@ ghbci_context_init (GHbciContext *self)
     priv->class_HBCIStatus = NULL;
     priv->class_HBCIPassport = NULL;
     priv->class_AbstractHBCIPassport = NULL;
+    priv->class_AbstractPinTanPassport = NULL;
     priv->class_HBCIJobResultImpl = NULL;
     priv->class_GVRSaldoReq = NULL;
     priv->class_GVRSaldoReqInfo = NULL;
@@ -204,15 +205,21 @@ ghbci_context_init (GHbciContext *self)
     priv->method_HBCIStatus_getErrorString = NULL;
     priv->method_HBCIPassport_getAccounts = NULL;
     priv->method_AbstractHBCIPassport_getInstance = NULL;
+    priv->method_AbstractPinTanPassport_getTwostepMechanisms = NULL;
+    priv->method_AbstractPinTanPassport_getAllowedTwostepMechanisms = NULL;
     priv->method_HBCIJobResultImpl_isOK = NULL;
     priv->method_Konto_constructor = NULL;
     priv->method_Value_toString = NULL;
     priv->method_Properties_keys = NULL;
+    priv->method_Properties_getProperty = NULL;
+    priv->method_Hashtable_toString = NULL;
+    priv->method_Hashtable_get = NULL;
     priv->method_Enumeration_hasMoreElements = NULL;
     priv->method_Enumeration_nextElement = NULL;
     priv->method_Iterator_hasNext = NULL;
     priv->method_Iterator_next = NULL;
     priv->method_List_iterator = NULL;
+    priv->method_List_contains = NULL;
     priv->method_StringBuffer_replace = NULL;
     priv->method_StringBuffer_setLength = NULL;
     priv->method_StringBuffer_toString = NULL;
@@ -419,6 +426,7 @@ ghbci_context_new ()
     defineJavaClass(HBCIStatus, "org/kapott/hbci/status/HBCIStatus")
     defineJavaClass(HBCIPassport, "org/kapott/hbci/passport/HBCIPassport")
     defineJavaClass(AbstractHBCIPassport, "org/kapott/hbci/passport/AbstractHBCIPassport")
+    defineJavaClass(AbstractPinTanPassport, "org/kapott/hbci/passport/AbstractPinTanPassport")
     defineJavaClass(HBCIJobResultImpl, "org/kapott/hbci/GV_Result/HBCIJobResultImpl")
     defineJavaClass(GVRSaldoReq, "org/kapott/hbci/GV_Result/GVRSaldoReq")
     defineJavaClass(GVRSaldoReqInfo, "org/kapott/hbci/GV_Result/GVRSaldoReq$Info")
@@ -462,18 +470,24 @@ ghbci_context_new ()
     defineJavaMethod(HBCIStatus, getErrorString, "()Ljava/lang/String;")
     defineJavaMethod(HBCIPassport, getAccounts, "()[Lorg/kapott/hbci/structures/Konto;")
     defineJavaMethod(HBCIJobResultImpl, isOK, "()Z")
+    defineJavaMethod(AbstractPinTanPassport, getTwostepMechanisms, "()Ljava/util/Hashtable;")
+    defineJavaMethod(AbstractPinTanPassport, getAllowedTwostepMechanisms, "()Ljava/util/List;")
     defineJavaMethod(GVRSaldoReq, getEntries, "()[Lorg/kapott/hbci/GV_Result/GVRSaldoReq$Info;")
     defineJavaMethod(GVRKUms, toString, "()Ljava/lang/String;")
     defineJavaMethod(GVRKUms, getFlatData, "()Ljava/util/List;")
     defineJavaMethod(Properties, keys, "()Ljava/util/Enumeration;")
+    defineJavaMethod(Properties, getProperty, "(Ljava/lang/String;)Ljava/lang/String;")
     defineJavaMethod(Enumeration, hasMoreElements, "()Z")
     defineJavaMethod(Enumeration, nextElement, "()Ljava/lang/Object;")
     defineJavaMethod(Iterator, hasNext, "()Z")
     defineJavaMethod(Iterator, next, "()Ljava/lang/Object;")
     defineJavaMethod(List, iterator, "()Ljava/util/Iterator;")
+    defineJavaMethod(List, contains, "(Ljava/lang/Object;)Z")
     defineJavaMethod(StringBuffer, replace, "(IILjava/lang/String;)Ljava/lang/StringBuffer;")
     defineJavaMethod(StringBuffer, setLength, "(I)V")
     defineJavaMethod(StringBuffer, toString, "()Ljava/lang/String;")
+    defineJavaMethod(Hashtable, toString, "()Ljava/lang/String;")
+    defineJavaMethod(Hashtable, get, "(Ljava/lang/Object;)Ljava/lang/Object;")
     defineJavaMethod(Value, toString, "()Ljava/lang/String;")
     defineJavaMethod(Date, toString, "()Ljava/lang/String;")
     defineJavaMethod(Date, getDate, "()I")
@@ -801,6 +815,94 @@ ghbci_context_get_accounts (GHbciContext* self, const gchar* blz, const gchar* u
     }
 
     return account_list;
+}
+
+/**
+ * ghbci_context_get_tan_methods:
+ * @self: The #GHbciContext
+ * @blz: blz
+ * @userid: userid
+ *
+ * Get list of tan methods supported by this account
+ *
+ * Return: (element-type gchar* gchar*) (transfer full): List of tan methods
+ **/
+GHashTable*
+ghbci_context_get_tan_methods (GHbciContext* self, const gchar* blz, const gchar* userid)
+{
+    GHbciContextPrivate* priv;
+    GHashTable *tan_methods_result = NULL;
+
+    g_return_val_if_fail (GHBCI_IS_CONTEXT (self), NULL);
+    priv = self->priv;
+
+    jobject hbci_handler = get_hbci_handler(self, blz, userid);
+    if(hbci_handler == NULL) {
+        g_warning("no handler found");
+        return NULL;
+    }
+
+    // get passport from HBCIHandler
+    jobject passport = (*priv->jni_env)->CallObjectMethod(priv->jni_env, hbci_handler, priv->method_HBCIHandler_getPassport);
+    if (passport == NULL) {
+        g_warning("creating passport failed");
+        (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
+        return NULL;
+    }
+
+    // get tan methods
+    jobject tan_methods = (*priv->jni_env)->CallObjectMethod(priv->jni_env, passport, priv->method_AbstractPinTanPassport_getTwostepMechanisms);
+    if (tan_methods == NULL) {
+        g_warning("fetching tan methods failed");
+        (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
+        goto cleanup_passport;
+    }
+
+    // get allowed tan methods
+    jobject allowed_tan_methods = (*priv->jni_env)->CallObjectMethod(priv->jni_env, passport, priv->method_AbstractPinTanPassport_getAllowedTwostepMechanisms);
+    if (allowed_tan_methods == NULL) {
+        g_warning("fetching allowed tan methods failed");
+        (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
+        goto cleanup_tan_methods;
+    }
+
+    jobject tan_methods_keys = (*priv->jni_env)->CallObjectMethod(priv->jni_env, tan_methods, priv->method_Properties_keys);
+
+    jstring name_str = (*priv->jni_env)->NewStringUTF(priv->jni_env, "name");
+
+    tan_methods_result = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+
+    while((*priv->jni_env)->CallBooleanMethod(priv->jni_env, tan_methods_keys, priv->method_Enumeration_hasMoreElements)) {
+
+        jobject key = (*priv->jni_env)->CallObjectMethod(priv->jni_env, tan_methods_keys, priv->method_Enumeration_nextElement);
+
+        if ((*priv->jni_env)->CallBooleanMethod(priv->jni_env, allowed_tan_methods, priv->method_List_contains, key)) {
+            jobject properties = (*priv->jni_env)->CallObjectMethod(priv->jni_env, tan_methods, priv->method_Hashtable_get, key);
+            jobject name = (*priv->jni_env)->CallObjectMethod(priv->jni_env, properties, priv->method_Properties_getProperty, name_str);
+
+            const gchar* native_key = (*priv->jni_env)->GetStringUTFChars(priv->jni_env, key, 0);
+            const gchar* native_name = (*priv->jni_env)->GetStringUTFChars(priv->jni_env, name, 0);
+
+            g_hash_table_insert(tan_methods_result, g_strdup(native_key), g_strdup(native_name));
+
+            (*priv->jni_env)->ReleaseStringUTFChars(priv->jni_env, name, native_name);
+            (*priv->jni_env)->ReleaseStringUTFChars(priv->jni_env, key, native_key);
+
+            (*priv->jni_env)->DeleteLocalRef(priv->jni_env, properties);
+            (*priv->jni_env)->DeleteLocalRef(priv->jni_env, name);
+        }
+        (*priv->jni_env)->DeleteLocalRef(priv->jni_env, key);
+    }
+
+    (*priv->jni_env)->DeleteLocalRef(priv->jni_env, name_str);
+    (*priv->jni_env)->DeleteLocalRef(priv->jni_env, tan_methods_keys);
+    (*priv->jni_env)->DeleteLocalRef(priv->jni_env, allowed_tan_methods);
+cleanup_tan_methods:
+    (*priv->jni_env)->DeleteLocalRef(priv->jni_env, tan_methods);
+cleanup_passport:
+    (*priv->jni_env)->DeleteLocalRef(priv->jni_env, passport);
+
+    return tan_methods_result;
 }
 
 /**

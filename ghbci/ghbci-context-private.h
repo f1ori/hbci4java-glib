@@ -51,6 +51,7 @@ struct _GHbciContextPrivate
     jclass class_HBCIStatus;
     jclass class_HBCIPassport;
     jclass class_AbstractHBCIPassport;
+    jclass class_AbstractPinTanPassport;
     jclass class_HBCIJobResultImpl;
     jclass class_GVRSaldoReq;
     jclass class_GVRSaldoReqInfo;
@@ -81,6 +82,8 @@ struct _GHbciContextPrivate
     jmethodID method_HBCIStatus_getErrorString;
     jmethodID method_HBCIPassport_getAccounts;
     jmethodID method_AbstractHBCIPassport_getInstance;
+    jmethodID method_AbstractPinTanPassport_getTwostepMechanisms;
+    jmethodID method_AbstractPinTanPassport_getAllowedTwostepMechanisms;
     jmethodID method_HBCIJobResultImpl_isOK;
     jmethodID method_GVRSaldoReq_getEntries;
     jmethodID method_GVRKUms_toString;
@@ -88,14 +91,18 @@ struct _GHbciContextPrivate
     jmethodID method_Konto_constructor;
     jmethodID method_Value_toString;
     jmethodID method_Properties_keys;
+    jmethodID method_Properties_getProperty;
     jmethodID method_Enumeration_hasMoreElements;
     jmethodID method_Enumeration_nextElement;
     jmethodID method_Iterator_hasNext;
     jmethodID method_Iterator_next;
     jmethodID method_List_iterator;
+    jmethodID method_List_contains;
     jmethodID method_StringBuffer_replace;
     jmethodID method_StringBuffer_setLength;
     jmethodID method_StringBuffer_toString;
+    jmethodID method_Hashtable_toString;
+    jmethodID method_Hashtable_get;
     jmethodID method_Date_toString;
     jmethodID method_Date_getDate;
     jmethodID method_Date_getMonth;
