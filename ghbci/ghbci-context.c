@@ -207,6 +207,7 @@ ghbci_context_init (GHbciContext *self)
     priv->method_AbstractHBCIPassport_getInstance = NULL;
     priv->method_AbstractPinTanPassport_getTwostepMechanisms = NULL;
     priv->method_AbstractPinTanPassport_getAllowedTwostepMechanisms = NULL;
+    priv->method_AbstractPinTanPassport_setCurrentTANMethod = NULL;
     priv->method_HBCIJobResultImpl_isOK = NULL;
     priv->method_Konto_constructor = NULL;
     priv->method_Value_toString = NULL;
@@ -472,6 +473,7 @@ ghbci_context_new ()
     defineJavaMethod(HBCIJobResultImpl, isOK, "()Z")
     defineJavaMethod(AbstractPinTanPassport, getTwostepMechanisms, "()Ljava/util/Hashtable;")
     defineJavaMethod(AbstractPinTanPassport, getAllowedTwostepMechanisms, "()Ljava/util/List;")
+    defineJavaMethod(AbstractPinTanPassport, setCurrentTANMethod, "(Ljava/lang/String;)V")
     defineJavaMethod(GVRSaldoReq, getEntries, "()[Lorg/kapott/hbci/GV_Result/GVRSaldoReq$Info;")
     defineJavaMethod(GVRKUms, toString, "()Ljava/lang/String;")
     defineJavaMethod(GVRKUms, getFlatData, "()Ljava/util/List;")
@@ -849,6 +851,8 @@ ghbci_context_get_tan_methods (GHbciContext* self, const gchar* blz, const gchar
         (*priv->jni_env)->ExceptionDescribe(priv->jni_env);
         return NULL;
     }
+
+    (*priv->jni_env)->CallVoidMethod(priv->jni_env, passport, priv->method_AbstractPinTanPassport_setCurrentTANMethod, NULL);
 
     // get tan methods
     jobject tan_methods = (*priv->jni_env)->CallObjectMethod(priv->jni_env, passport, priv->method_AbstractPinTanPassport_getTwostepMechanisms);

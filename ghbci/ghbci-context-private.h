@@ -84,6 +84,7 @@ struct _GHbciContextPrivate
     jmethodID method_AbstractHBCIPassport_getInstance;
     jmethodID method_AbstractPinTanPassport_getTwostepMechanisms;
     jmethodID method_AbstractPinTanPassport_getAllowedTwostepMechanisms;
+    jmethodID method_AbstractPinTanPassport_setCurrentTANMethod;
     jmethodID method_HBCIJobResultImpl_isOK;
     jmethodID method_GVRSaldoReq_getEntries;
     jmethodID method_GVRKUms_toString;
