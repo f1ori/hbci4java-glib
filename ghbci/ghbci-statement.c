@@ -60,6 +60,9 @@ struct _GHbciStatementPrivate
     gchar* other_bic;
     gchar* other_iban;
     gchar* transaction_type;
+    gchar* eref;
+    gchar* mref;
+    gchar* cred;
 };
 
 /* properties */
@@ -76,6 +79,9 @@ enum
     PROP_OTHER_IBAN,
     PROP_OTHER_BIC,
     PROP_TRANSACTION_TYPE,
+    PROP_EREF,
+    PROP_MREF,
+    PROP_CRED,
 };
 
 static void     ghbci_statement_class_init         (GHbciStatementClass *class);
@@ -117,7 +123,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                          "Valuta date", /* nick */
                                                          "Valuta date", /* blurb */
                                                          G_TYPE_DATE,
-                                                         G_PARAM_READABLE));
+                                                         G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:booking-date
@@ -130,7 +136,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                          "Booking date",
                                                          "Booking date",
                                                          G_TYPE_DATE,
-                                                         G_PARAM_READABLE));
+                                                         G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:value
@@ -143,7 +149,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "Value",
                                                           "Value (transaction amount)",
                                                           "0.00" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
     /**
      * GHbciStatement:saldo
      *
@@ -155,7 +161,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "Saldo",
                                                           "Saldo after transaction",
                                                           "0.00" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:gv-code
@@ -168,7 +174,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "GV Code",
                                                           "GV Code",
                                                           "0" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:reference
@@ -181,7 +187,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "Reference",
                                                           "Reference / Description",
                                                           "not-set" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:other-name
@@ -194,7 +200,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "Name of other account",
                                                           "Name of other account",
                                                           "not-set" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:other-iban
@@ -207,7 +213,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "IBAN of other account",
                                                           "IBAN of other account",
                                                           "not-set" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:other-bic
@@ -220,7 +226,7 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "BIC of other account",
                                                           "BIC of other account",
                                                           "not-set" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
 
     /**
      * GHbciStatement:transaction-type
@@ -233,7 +239,46 @@ ghbci_statement_class_init (GHbciStatementClass *class)
                                                           "type of transaction",
                                                           "type of transaction",
                                                           "not-set" /* default value*/,
-                                                          G_PARAM_READABLE));
+                                                          G_PARAM_READWRITE));
+
+    /**
+     * GHbciStatement:eref
+     *
+     * end-to-end reference
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_EREF,
+                                     g_param_spec_string ("eref",
+                                                          "end-to-end reference",
+                                                          "end-to-end reference",
+                                                          "not-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
+
+    /**
+     * GHbciStatement:mref
+     *
+     * mandate reference
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_MREF,
+                                     g_param_spec_string ("mref",
+                                                          "mandate reference",
+                                                          "mandate reference",
+                                                          "not-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
+
+    /**
+     * GHbciStatement:cred
+     *
+     * creditor id
+     **/
+    g_object_class_install_property (obj_class,
+                                     PROP_CRED,
+                                     g_param_spec_string ("cred",
+                                                          "creditor id",
+                                                          "creditor id",
+                                                          "not-set" /* default value*/,
+                                                          G_PARAM_READWRITE));
 
 
     /* add private structure */
@@ -258,6 +303,9 @@ ghbci_statement_init (GHbciStatement *self)
     priv->other_bic = NULL;
     priv->other_iban = NULL;
     priv->transaction_type = NULL;
+    priv->eref = NULL;
+    priv->mref = NULL;
+    priv->cred = NULL;
 }
 
 static void
@@ -278,6 +326,9 @@ ghbci_statement_dispose (GObject *obj)
     g_free(priv->other_bic);
     g_free(priv->other_iban);
     g_free(priv->transaction_type);
+    g_free(priv->eref);
+    g_free(priv->mref);
+    g_free(priv->cred);
 
     G_OBJECT_CLASS (ghbci_statement_parent_class)->dispose (obj);
 }
@@ -296,14 +347,78 @@ ghbci_statement_set_property (GObject      *obj,
                               const GValue *value,
                               GParamSpec   *pspec)
 {
-    //GHbciStatement *self;
-    //GHbciStatementPrivate *priv;
+    GHbciStatement *self;
+    GHbciStatementPrivate *priv;
 
-    //self = GHBCI_STATEMENT (obj);
-    //priv = GHBCI_STATEMENT_GET_PRIVATE (self);
+    self = GHBCI_STATEMENT (obj);
+    priv = GHBCI_STATEMENT_GET_PRIVATE (self);
 
     switch (prop_id)
     {
+    case PROP_VALUTA:
+        g_free (priv->valuta);
+        priv->valuta = g_value_dup_boxed (value);
+        break;
+
+    case PROP_BOOKING_DATE:
+        g_free (priv->booking_date);
+        priv->booking_date = g_value_dup_boxed (value);
+        break;
+
+    case PROP_VALUE:
+        g_free (priv->value);
+        priv->value = g_value_dup_string (value);
+        break;
+
+    case PROP_SALDO:
+        g_free (priv->saldo);
+        priv->saldo = g_value_dup_string (value);
+        break;
+
+    case PROP_REFERENCE:
+        g_free (priv->reference);
+        priv->reference = g_value_dup_string (value);
+        break;
+
+    case PROP_GV_CODE:
+        g_free (priv->gv_code);
+        priv->gv_code = g_value_dup_string (value);
+        break;
+
+    case PROP_OTHER_NAME:
+        g_free (priv->other_name);
+        priv->other_name = g_value_dup_string (value);
+        break;
+
+    case PROP_OTHER_IBAN:
+        g_free (priv->other_iban);
+        priv->other_iban = g_value_dup_string (value);
+        break;
+
+    case PROP_OTHER_BIC:
+        g_free (priv->other_bic);
+        priv->other_bic = g_value_dup_string (value);
+        break;
+
+    case PROP_TRANSACTION_TYPE:
+        g_free (priv->transaction_type);
+        priv->transaction_type = g_value_dup_string (value);
+        break;
+
+    case PROP_EREF:
+        g_free (priv->eref);
+        priv->eref = g_value_dup_string (value);
+        break;
+
+    case PROP_MREF:
+        g_free (priv->mref);
+        priv->mref = g_value_dup_string (value);
+        break;
+
+    case PROP_CRED:
+        g_free (priv->cred);
+        priv->cred = g_value_dup_string (value);
+        break;
 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, prop_id, pspec);
@@ -363,6 +478,18 @@ ghbci_statement_get_property (GObject    *obj,
 
     case PROP_TRANSACTION_TYPE:
         g_value_set_string (value, priv->transaction_type);
+        break;
+
+    case PROP_EREF:
+        g_value_set_string (value, priv->eref);
+        break;
+
+    case PROP_MREF:
+        g_value_set_string (value, priv->mref);
+        break;
+
+    case PROP_CRED:
+        g_value_set_string (value, priv->cred);
         break;
 
     default:
@@ -490,6 +617,22 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
 }
 
 void
+ghbci_statement_remove_newlines(gchar* str)
+{
+    gint i = 0;
+    gint skipped = 0;
+    while(str[i] != '\0') {
+        if (str[i] == '\n') {
+            skipped++;
+        } else {
+            str[i - skipped] = str[i];
+        }
+        i++;
+    }
+    str[i - skipped] = str[i];
+}
+
+void
 ghbci_statement_prettify_statement (GObject* statement)
 {
     gchar *reference;
@@ -501,25 +644,7 @@ ghbci_statement_prettify_statement (GObject* statement)
                  "other-bic", &other_bic,
                  NULL);
 
-    // fix iban and bic for volksbank
-    // TODO rewrite with different lengths of iban and bics in mind
-    gint len = strlen (reference);
-    if (len > 44) {
-        gchar buffer[7];
-        g_strlcpy (buffer, reference + len - 44, 7);
-        if (g_strcmp0(buffer, "IBAN: ") == 0) {
-            g_strlcpy (buffer, reference + len - 16, 7);
-            if (g_strcmp0(buffer, "BIC: ") == 0) {
-                g_free (other_iban);
-                g_free (other_bic);
-                other_iban = g_strndup (reference + len - 39, 22);
-                other_bic = g_strndup (reference + len - 11, 11);
-                reference[len - 46] = '\0';
-            }
-        }
-    }
-
-    // extract SEPA fields from reference
+    // extract SEPA fields from reference (ING Di-Ba)
     while (reference[4] == '+') {
         if (g_str_has_prefix(reference, "EREF+")
                 || g_str_has_prefix(reference, "MREF+")
@@ -558,6 +683,25 @@ ghbci_statement_prettify_statement (GObject* statement)
             break;
         }
     }
+
+    // volksbank way
+    //gchar** words = g_strsplit_set(reference, " \n");
+    gint len = strlen (reference);
+    if (len > 44) {
+        gchar buffer[7];
+        g_strlcpy (buffer, reference + len - 44, 7);
+        if (g_strcmp0(buffer, "IBAN: ") == 0) {
+            g_strlcpy (buffer, reference + len - 16, 7);
+            if (g_strcmp0(buffer, "BIC: ") == 0) {
+                g_free (other_iban);
+                g_free (other_bic);
+                other_iban = g_strndup (reference + len - 39, 22);
+                other_bic = g_strndup (reference + len - 11, 11);
+                reference[len - 46] = '\0';
+            }
+        }
+    }
+
 
     g_object_set(statement,
                  "reference", reference,

@@ -74,6 +74,6 @@ AC_SUBST([LIBTOOL])
 AC_SUBST(GHBCI_CFLAGS)
 AC_SUBST(GHBCI_LIBS)
 
-AC_CONFIG_FILES([Makefile ghbci/Makefile ghbci/ghbci-0.1.pc doc/Makefile doc/reference/Makefile])
+AC_CONFIG_FILES([Makefile ghbci/Makefile tests/Makefile ghbci/ghbci-0.1.pc doc/Makefile doc/reference/Makefile])
 
 AC_OUTPUT

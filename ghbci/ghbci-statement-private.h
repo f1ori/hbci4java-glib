@@ -24,6 +24,7 @@
 #include <jni.h>
 
 GHbciStatement* ghbci_statement_new_with_jobject (GHbciContext* context, jobject jobj);
+void ghbci_statement_remove_newlines (gchar* str);
 
 #endif /* __GHBCI_STATEMENT_PRIVATE_H__ */
 
