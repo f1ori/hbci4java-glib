@@ -564,18 +564,17 @@ ghbci_statement_new_with_jobject (GHbciContext* context, jobject jstatement)
         }
 
         const char* usage_line = (*jni_env)->GetStringUTFChars(jni_env, jusage_line, 0);
-        gchar* usage_line_without_whitespace = g_strdup(usage_line);
-        g_strchomp(usage_line_without_whitespace);
 
-        g_string_append(reference, usage_line_without_whitespace);
+        g_string_append(reference, usage_line);
 
-        if (g_strcmp0(usage_line_without_whitespace, "") != 0) {
-            g_string_append(reference, "\n");
+        if (strlen(usage_line) < 27) {
+            g_string_append(reference, " ");
         }
+
+        g_string_append(reference, "\n");
 
         (*jni_env)->ReleaseStringUTFChars(jni_env, jusage_line, usage_line);
         (*jni_env)->DeleteLocalRef(jni_env, jusage_line);
-        g_free(usage_line_without_whitespace);
     }
     priv->reference = g_string_free(reference, FALSE);
     (*jni_env)->DeleteLocalRef(jni_env, jiterator);
@@ -636,15 +635,11 @@ void
 ghbci_statement_prettify_statement (GObject* statement)
 {
     gchar *reference;
-    gchar *other_iban;
-    gchar *other_bic;
     g_object_get(statement,
                  "reference", &reference,
-                 "other-iban", &other_iban,
-                 "other-bic", &other_bic,
                  NULL);
 
-    // extract SEPA fields from reference (ING Di-Ba)
+    // extract SEPA fields from reference (ING DiBa)
     while (reference[4] == '+') {
         if (g_str_has_prefix(reference, "EREF+")
                 || g_str_has_prefix(reference, "MREF+")
@@ -652,17 +647,24 @@ ghbci_statement_prettify_statement (GObject* statement)
 
             // detemine field size
             gint end = 4;
-            while (!g_ascii_isspace(reference[end]))
+            while (reference[end] != '\n')
+                ++end;
+            ++end;
+            while (reference[end] != '\n')
                 ++end;
 
-            // save field
             gchar* value = g_strndup(reference + 5, end - 5);
+            ghbci_statement_remove_newlines(value);
+            g_strstrip(value);
+
+            // save field
             if (g_str_has_prefix(reference, "EREF+"))
                 g_object_set(statement, "eref", value, NULL);
             else if (g_str_has_prefix(reference, "MREF+"))
                 g_object_set(statement, "mref", value, NULL);
             else if (g_str_has_prefix(reference, "CRED+"))
                 g_object_set(statement, "cred", value, NULL);
+            g_free(value);
 
             // remove field
             memmove(reference, reference + end + 1, strlen(reference + end + 1) + 1);
@@ -671,11 +673,7 @@ ghbci_statement_prettify_statement (GObject* statement)
             // always last field
             memmove(reference, reference + 5, strlen(reference + 5) + 1);
             // remove newlines, they never make sense in SEPA fields
-            for (gint i = 0; reference[i] != '\0'; ++i) {
-                if (reference[i] == '\n') {
-                    memmove(reference + i, reference + i + 1, strlen(reference + i + 1) + 1);
-                }
-            }
+            ghbci_statement_remove_newlines(reference);
             break;
 
         } else {
@@ -685,29 +683,51 @@ ghbci_statement_prettify_statement (GObject* statement)
     }
 
     // volksbank way
-    //gchar** words = g_strsplit_set(reference, " \n");
-    gint len = strlen (reference);
-    if (len > 44) {
-        gchar buffer[7];
-        g_strlcpy (buffer, reference + len - 44, 7);
-        if (g_strcmp0(buffer, "IBAN: ") == 0) {
-            g_strlcpy (buffer, reference + len - 16, 7);
-            if (g_strcmp0(buffer, "BIC: ") == 0) {
-                g_free (other_iban);
-                g_free (other_bic);
-                other_iban = g_strndup (reference + len - 39, 22);
-                other_bic = g_strndup (reference + len - 11, 11);
-                reference[len - 46] = '\0';
-            }
+    ghbci_statement_remove_newlines(reference);
+    g_strstrip(reference);
+    gchar** words = g_strsplit_set(reference, " ", -1);
+    gint i = g_strv_length(words) - 2;
+    while (i >= 0) {
+        if (g_strcmp0(words[i], "BIC:") == 0) {
+            g_object_set(statement, "other-bic", words[i + 1], NULL);
+            g_free(words[i + 1]);
+            g_free(words[i]);
+            words[i] = NULL;
+            i -= 2;
+        } else if (g_strcmp0(words[i], "IBAN:") == 0) {
+            g_object_set(statement, "other-iban", words[i + 1], NULL);
+            g_free(words[i + 1]);
+            g_free(words[i]);
+            words[i] = NULL;
+            i -= 2;
+        } else if (g_strcmp0(words[i], "CRED:") == 0) {
+            g_object_set(statement, "cred", words[i + 1], NULL);
+            g_free(words[i + 1]);
+            g_free(words[i]);
+            words[i] = NULL;
+            i -= 2;
+        } else if (g_strcmp0(words[i], "MREF:") == 0) {
+            g_object_set(statement, "mref", words[i + 1], NULL);
+            g_free(words[i + 1]);
+            g_free(words[i]);
+            words[i] = NULL;
+            i -= 2;
+        } else if (g_strcmp0(words[i], "EREF:") == 0) {
+            g_object_set(statement, "eref", words[i + 1], NULL);
+            g_free(words[i + 1]);
+            g_free(words[i]);
+            words[i] = NULL;
+            i -= 2;
+        } else {
+            break;
         }
     }
+    g_free(reference);
+    gchar* result = g_strjoinv(" ", words);
+    reference = result;
+    g_strfreev(words);
 
-
-    g_object_set(statement,
-                 "reference", reference,
-                 "other-iban", other_iban,
-                 "other-bic", other_bic,
-                 NULL);
+    g_object_set(statement, "reference", reference, NULL);
 }
 
 
