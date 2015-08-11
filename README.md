@@ -10,6 +10,13 @@ when using this.
 
 The API is not stable and will be extended as gbank grows.
 
+## Build
+
+./autogen.sh
+./configure --prefix=/usr
+make
+make install
+
 ## License
 
 This library is license under GPL 3 or above. For further details see COPYING.

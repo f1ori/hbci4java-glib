@@ -2,7 +2,7 @@
 
 NULL =
 AM_CPPFLAGS =
-AM_CFLAGS =
+AM_CFLAGS = -DDATA_DIR=\"$(pkgdatadir)\"
 BUILT_SOURCES =
 CLEANFILES =
 EXTRA_DIST =
@@ -17,6 +17,7 @@ CLEANFILES += *~ ghbci-@GHBCI_API_VERSION@.pc
 
 library_includedir=$(includedir)/ghbci
 library_include_HEADERS = ghbci.h
+
 
 AM_CPPFLAGS += \
 	$(GHBCI_CFLAGS) \

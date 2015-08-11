@@ -47,7 +47,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Run libtool as normal.
-#echo "${args[@]}"
+# echo "${args[@]}"
 "${args[@]}"
 
 if [ -n "$output" ]; then
@@ -57,4 +57,14 @@ if [ -n "$output" ]; then
     sed "s/^dependency_libs=.*/dependency_libs=''/" < "$output.tmp" > "$output"
     chmod --reference="$output.tmp" "$output"
     rm "$output.tmp"
+
+    # fix .lai files too (will be installed)
+    if [ -f ".libs/${output}i" ]; then
+        mv ".libs/${output}i" "$output.tmp"
+
+        # Remove dependency_libs from output.
+        sed "s/^dependency_libs=.*/dependency_libs=''/" < "$output.tmp" > ".libs/${output}i"
+        chmod --reference="$output.tmp" ".libs/${output}i"
+        rm "$output.tmp"
+    fi
 fi

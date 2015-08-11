@@ -390,7 +390,7 @@ ghbci_context_new ()
 
     // initialize java virtual machine
     // Path to hbci4java.jar
-    options.optionString = "-Djava.class.path=hbci4java.jar"; 
+    options.optionString = "-Djava.class.path=" DATA_DIR "/hbci4java.jar"; 
     vm_args.version = JNI_VERSION_1_6; //JDK version. This indicates version 1.6
     vm_args.nOptions = 1;
     vm_args.options = &options;
