@@ -88,7 +88,7 @@ ghbci_context_class_init (GHbciContextClass *class)
      * Called when hbci4java needs additional input, like account information
      * or credentials
      *
-     * Return: (transfer full): answer, if required by reason
+     * Returns: (transfer full): answer, if required by reason
      **/
     ghbci_context_signals[CALLBACK] =
         g_signal_new ("callback",
@@ -689,7 +689,7 @@ ghbci_context_blz_foreach (GHbciContext* self, GHbciBlzFunc func, gpointer user_
  * Add bank account to passport file. Triggers #callback signal for additional
  * account details and credentials and fetches account capabilities online.
  *
- * Return: TRUE if successful
+ * Returns: TRUE if successful
  **/
 gboolean
 ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* userid)
@@ -767,7 +767,7 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
  *
  * Get list of bank accounts visible by this userid
  *
- * Return: (element-type GHbciAccount) (transfer full): List of #GHbciAccount objects
+ * Returns: (element-type GHbciAccount) (transfer full): List of #GHbciAccount objects
  **/
 GSList*
 ghbci_context_get_accounts (GHbciContext* self, const gchar* blz, const gchar* userid)
@@ -827,7 +827,7 @@ ghbci_context_get_accounts (GHbciContext* self, const gchar* blz, const gchar* u
  *
  * Get list of tan methods supported by this account
  *
- * Return: (element-type gchar* gchar*) (transfer full): List of tan methods
+ * Returns: (element-type gchar* gchar*) (transfer full): List of tan methods
  **/
 GHashTable*
 ghbci_context_get_tan_methods (GHbciContext* self, const gchar* blz, const gchar* userid)
@@ -914,10 +914,11 @@ cleanup_passport:
  * @self: The #GHbciContext
  * @blz: blz
  * @userid: userid
+ * @number: number of account to inquery
  *
  * Fetch balances of bank accounts
  *
- * Return: (transfer full): value
+ * Returns: (transfer full): balance
  **/
 gchar*
 ghbci_context_get_balances (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number)
@@ -1050,7 +1051,7 @@ cleanup_job:
  *
  * Fetch all statements for a bank account
  *
- * Return: (element-type GHbciStatement) (transfer full): List of #GHbciStatement objects
+ * Returns: (element-type GHbciStatement) (transfer full): List of #GHbciStatement objects
  **/
 GSList*
 ghbci_context_get_statements (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number)
@@ -1167,7 +1168,7 @@ cleanup_job:
  *
  * Send SEPA transfer
  *
- * Return: true of successful
+ * Returns: true if successful
  **/
 gboolean
 ghbci_context_send_transfer (GHbciContext* self, const gchar* blz, const gchar* userid, const gchar* number,
