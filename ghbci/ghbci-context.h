@@ -149,7 +149,7 @@ typedef void (*GHbciBlzFunc) (const gchar* blz, gpointer user_data);
 
 GType             ghbci_context_get_type                      (void) G_GNUC_CONST;
 
-GHbciContext*     ghbci_context_new                           ();
+GHbciContext*     ghbci_context_new                           (const gchar* directory);
 
 const gchar*      ghbci_context_get_name_for_blz              (GHbciContext* self, const gchar* blz);
 

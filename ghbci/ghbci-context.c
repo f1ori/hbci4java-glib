@@ -157,6 +157,8 @@ ghbci_context_init (GHbciContext *self)
 
     priv->hbci_handlers = NULL;
     priv->accounts = NULL;
+    priv->passport_directory = NULL;
+    priv->passports = NULL;
 
     priv->jvm = NULL;
     priv->jni_env = NULL;
@@ -261,6 +263,17 @@ ghbci_context_dispose (GObject *obj)
         (*self->priv->jvm)->DestroyJavaVM(self->priv->jvm); 
         self->priv->jvm = NULL;
     }
+
+    GSList* iter = self->priv->passports;
+    while(iter != NULL) {
+        GFile* file = g_file_new_for_path (iter->data);
+        g_debug("delete file: %s", iter->data);
+        g_file_delete(file, NULL, NULL);
+        g_object_unref(file);
+        iter = g_slist_next(iter);
+    }
+    g_slist_free_full(self->priv->passports, g_free);
+    g_free(self->priv->passport_directory);
 
     G_OBJECT_CLASS (ghbci_context_parent_class)->dispose (obj);
 }
@@ -367,13 +380,14 @@ jobject get_account(GHbciContext* self, const gchar* blz, const gchar* userid, c
 
 /**
  * ghbci_context_new: (constructor)
+ * @directory: temporary directory to save passports
  *
  * Sets up a new #GHbciContext object
  *
  * Returns: (transfer full): A New #GHbciContext
  **/
 GHbciContext*
-ghbci_context_new ()
+ghbci_context_new (const gchar* directory)
 {
     GHbciContext* context;
     GHbciContextPrivate* priv;
@@ -387,6 +401,7 @@ ghbci_context_new ()
 
     priv->hbci_handlers = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     priv->accounts      = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    priv->passport_directory = g_strdup(directory);
 
     // initialize java virtual machine
     // Path to hbci4java.jar
@@ -705,13 +720,18 @@ ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* u
     gchar* key = g_strconcat(blz, "+", userid, NULL);
 
     // set passport filename
-    gchar* filename = g_strconcat("./passport-", key, ".dat", NULL);
+    gchar* filename = g_strconcat(priv->passport_directory, "/passport-", key, ".dat", NULL);
     jstring filename_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "client.passport.PinTan.filename");
     jstring filename_value = (*priv->jni_env)->NewStringUTF(priv->jni_env, filename);
     (*priv->jni_env)->CallStaticVoidMethod(priv->jni_env, priv->class_HBCIUtils, priv->method_HBCIUtils_setParam, filename_key, filename_value);
     (*priv->jni_env)->DeleteLocalRef(priv->jni_env, filename_key);
     (*priv->jni_env)->DeleteLocalRef(priv->jni_env, filename_value);
-    g_free(filename);
+
+    if (g_slist_find_custom(priv->passports, filename, (GCompareFunc)g_strcmp0) == NULL) {
+        priv->passports = g_slist_prepend(priv->passports, filename);
+    } else {
+        g_free(filename);
+    }
 
     // force check certificates
     jstring checkcert_key = (*priv->jni_env)->NewStringUTF(priv->jni_env, "client.passport.PinTan.checkcert");

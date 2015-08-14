@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <gio/gio.h>
 
 
 #define GHBCI_CONTEXT_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
@@ -34,6 +35,8 @@ struct _GHbciContextPrivate
 
     GHashTable* hbci_handlers;
     GHashTable* accounts;
+    gchar* passport_directory;
+    GSList* passports;
 
     JavaVM* jvm;
     JNIEnv* jni_env;

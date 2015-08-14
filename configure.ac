@@ -21,6 +21,7 @@ AC_PATH_PROG([GLIB_GENMARSHAL], [glib-genmarshal])
 
 # Checks for libraries
 PKG_CHECK_MODULES([GOBJECT], [gobject-2.0 >= 2.38])
+PKG_CHECK_MODULES([GIO], [gio-2.0 >= 2.38])
 
 # Checks for typedefs, structures, and compiler characteristics
 AC_PROG_CC_STDC
@@ -34,8 +35,8 @@ JAVA_CFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
 
 
 # Compiler flags
-GHBCI_CFLAGS="$JAVA_CFLAGS $GOBJECT_CFLAGS"
-GHBCI_LIBS="$JAVA_LIBS $GOBJECT_LIBS"
+GHBCI_CFLAGS="$JAVA_CFLAGS $GOBJECT_CFLAGS $GIO_CFLAGS"
+GHBCI_LIBS="$JAVA_LIBS $GOBJECT_LIBS $GIO_LIBS"
 
 AM_INIT_AUTOMAKE([-Wall -Werror foreign -Wno-portability])
 AM_PATH_GLIB_2_0
