@@ -267,7 +267,7 @@ ghbci_context_dispose (GObject *obj)
     GSList* iter = self->priv->passports;
     while(iter != NULL) {
         GFile* file = g_file_new_for_path (iter->data);
-        g_debug("delete file: %s", iter->data);
+        g_debug("delete file: %s", (gchar*)iter->data);
         g_file_delete(file, NULL, NULL);
         g_object_unref(file);
         iter = g_slist_next(iter);
@@ -710,7 +710,6 @@ gboolean
 ghbci_context_add_passport (GHbciContext* self, const gchar* blz, const gchar* userid)
 {
     GHbciContextPrivate* priv;
-    gboolean result;
 
     g_return_val_if_fail (GHBCI_IS_CONTEXT (self), FALSE);
     g_return_val_if_fail (blz != NULL, FALSE);

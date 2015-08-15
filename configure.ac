@@ -29,8 +29,12 @@ AC_PROG_CC_STDC
 
 # JNI paths (TODO: should be autodetected)
 JAVA_HOME="/usr/lib/jvm/java"
-JAVA_LIBS="-R$JAVA_HOME/jre/lib/amd64/server -L$JAVA_HOME/jre/lib/amd64/server -ljvm"
-#JAVA_LIBS="-L$JAVA_HOME/jre/lib/amd64/server -ljvm -Wl,-rpath=$JAVA_HOME/jre/lib/amd64/server"
+JAVA_LIB_PATH="$JAVA_HOME/jre/lib/amd64/server"
+# non-devel packages sometimes don't have alternative symlinks
+JAVA_LIB_PATH=$(realpath $JAVA_LIB_PATH)
+echo "Use Java library path: $JAVA_LIB_PATH"
+
+JAVA_LIBS="-R$JAVA_LIB_PATH -L$JAVA_LIB_PATH -ljvm"
 JAVA_CFLAGS="-I$JAVA_HOME/include -I$JAVA_HOME/include/linux"
 
 

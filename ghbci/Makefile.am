@@ -34,6 +34,8 @@ ghbci-marshal.c: marshal.list
 	-glib-genmarshal --body --prefix=ghbci_marshal marshal.list > $@
 BUILT_SOURCES += ghbci-marshal.c ghbci-marshal.h
 CLEANFILES += ghbci-marshal.c ghbci-marshal.h
+DISTCLEANFILES += ghbci-marshal.c ghbci-marshal.h
+EXTRA_DIST += marshal.list
 
 
 source_public_h = \
@@ -45,6 +47,7 @@ source_public_h = \
 source_private_h = \
 	$(top_srcdir)/ghbci/ghbci-statement-private.h \
 	$(top_srcdir)/ghbci/ghbci-account-private.h \
+	$(top_srcdir)/ghbci/ghbci-context-private.h \
 	$(top_srcdir)/ghbci/ghbci-marshal.h \
 	$(NULL)
 

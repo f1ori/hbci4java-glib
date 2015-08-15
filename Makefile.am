@@ -8,7 +8,6 @@ if BUILD_GTK_DOC
 SUBDIRS += doc
 endif
 
-DIST_SUBDIRS = \
-	ghbci
-	doc
+DIST_SUBDIRS = ghbci doc tests
 
+EXTRA_DIST = libtool-kill-dependency_libs.sh README.md
