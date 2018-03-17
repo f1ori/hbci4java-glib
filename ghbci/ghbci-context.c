@@ -1198,7 +1198,7 @@ ghbci_context_send_transfer (GHbciContext* self, const gchar* blz, const gchar* 
     GHbciContextPrivate* priv;
     gboolean return_value = FALSE;
 
-    g_return_val_if_fail (GHBCI_IS_CONTEXT (self), NULL);
+    g_return_val_if_fail (GHBCI_IS_CONTEXT (self), FALSE);
     priv = self->priv;
 
     jobject hbci_handler = get_hbci_handler(self, blz, userid);
