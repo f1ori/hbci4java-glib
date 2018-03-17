@@ -45,11 +45,13 @@ marshall_sources = gnome.genmarshal(
   prefix: 'ghbci_marshal',
   sources: ['ghbci/marshal.list'])
 
+datadir = join_paths(get_option('prefix'), get_option('datadir'), 'ghbci')
+
 ghbci = shared_library(
   'ghbci-0.1',
   source_c + public_headers + private_headers + marshall_sources,
   dependencies: [java_dep, gobject_dep, gio_dep],
-  c_args: '-DDATA_DIR="'+get_option('datadir')+'"',
+  c_args: '-DDATA_DIR="'+datadir+'"',
   install_rpath: java_lib_dir,
   install: true)
 
